@@ -37,7 +37,7 @@ public final class Prefs {
 
     // "Open in player"
     public static final String KEY_OPEN_IN_PLAYER = "open_in_player";
-    public static final String KEY_STREAMING_APP = "streaming_app"; // stremio | nuvio
+    public static final String KEY_STREAMING_APP = "streaming_app"; // stremio | nuvio | cloudstream
 
     // "Match bottom nav to top bar color"
     public static final String KEY_MATCH_BOTTOM_NAV = "match_bottom_nav";
@@ -50,17 +50,21 @@ public final class Prefs {
     public static final String KEY_LAUNCH_TAB = "launch_tab"; // last | popular | search | activity | watchlist | profile
 
     // "Mod theme"
-    public static final String KEY_THEME_SURFACE = "theme_surface"; // stock | oled
-    public static final String KEY_THEME_OLED = "theme_oled";       // boolean mirror of the above
+    public static final String KEY_THEME_SURFACE = "theme_surface"; // stock | oled | purple | midnight
+    public static final String KEY_THEME_OLED = "theme_oled";       // legacy boolean mirror of the above
     public static final String KEY_THEME_ACCENT = "theme_accent";
     public static final String KEY_THEME_ACCENT_HEX = "theme_accent_hex";
 
-    /** Resolves the surface style ({@code stock} or {@code oled}). */
+    /**
+     * Resolves the surface style: {@code stock}, {@code oled}, {@code purple}, or {@code midnight}.
+     *
+     * <p>Backward compatible with the old boolean-only pref: if {@code KEY_THEME_SURFACE} is unset
+     * but {@code KEY_THEME_OLED} is true, still resolves to {@code oled}.
+     */
     public static String surface() {
         String s = getString(KEY_THEME_SURFACE, "");
-        if ("oled".equals(s)) return "oled";
         if (s.isEmpty() && getBoolean(KEY_THEME_OLED, false)) return "oled";
-        return "stock";
+        return s.isEmpty() ? "stock" : s;
     }
 
     private static SharedPreferences sp;
@@ -134,7 +138,7 @@ public final class Prefs {
         return getBoolean(KEY_OPEN_IN_PLAYER, false);
     }
 
-    /** Which app the "Open in player" button targets ({@code stremio} or {@code nuvio}). */
+    /** Which app the "Open in player" button targets ({@code stremio}, {@code nuvio}, or {@code cloudstream}). */
     public static String streamingApp() {
         return getString(KEY_STREAMING_APP, "stremio");
     }

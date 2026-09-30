@@ -7,11 +7,14 @@ import android.os.Build;
 import android.os.Bundle;
 
 /**
- * Runtime theme overlays for the "Mod settings" screen. Slice 1: a single "Pure black (OLED)"
- * overlay ({@code assets/morphe/oled.arsc}), loaded via {@code ResourcesLoader} on Android 12+.
+ * Runtime theme overlays for the "Mod settings" screen. Loads the user's chosen dark surface
+ * theme ({@code oled} / {@code purple} / {@code midnight}, or none for {@code stock}) plus accent
+ * and nav-icon overlays, via {@code ResourcesLoader} on Android 12+.
  *
- * <p>Toggling the pref triggers a restart (see {@link RestartHelper}), so there is no in-session
+ * <p>Toggling a pref triggers a restart (see {@link RestartHelper}), so there is no in-session
  * "remove overlay" path — at process start the overlay is either loaded everywhere or not at all.
+ * On Android 11 and below {@code ResourcesLoader} doesn't exist, so this is a no-op and the theme
+ * stays Stock.
  */
 public final class ModTheme {
 
@@ -27,15 +30,15 @@ public final class ModTheme {
             if (!isSupported() || context == null) return;
 
             Prefs.load(context);
-            String surface = Prefs.surface(); // stock | oled  (Material You is a patch-time patch)
-            // The Material You theme patch owns the surfaces; don't stack the OLED overlay on it.
+            String surface = Prefs.surface(); // stock | oled | purple | midnight
+            // The Material You theme patch owns the surfaces; don't stack a surface overlay on it.
             if (context.getResources().getIdentifier("morphe_my_surface", "color",
                     context.getPackageName()) != 0) {
                 surface = "stock";
             }
             String accent = Prefs.getString(Prefs.KEY_THEME_ACCENT, AccentPresets.defaultAccent(context));
             String navStyle = Prefs.getString(Prefs.KEY_NAV_INDICATOR, "stock");
-            boolean hasSurface = "oled".equals(surface);
+            boolean hasSurface = surface != null && !"stock".equals(surface);
             boolean hasAccent = accent != null && !accent.isEmpty() && !"green".equals(accent);
             boolean hasNavIcon = "white".equals(navStyle) || "accent".equals(navStyle)
                     || "accentPill".equals(navStyle);

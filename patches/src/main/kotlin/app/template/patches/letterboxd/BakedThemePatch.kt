@@ -1,0 +1,110 @@
+package app.template.patches.letterboxd
+
+import app.morphe.patcher.patch.PatchException
+import app.morphe.patcher.patch.resourcePatch
+import app.morphe.patcher.patch.stringOption
+import app.template.patches.letterboxd.theme.MIDNIGHT_SURFACES
+import app.template.patches.letterboxd.theme.PURPLE_SURFACES
+import app.template.patches.shared.Constants.COMPATIBILITY_LETTERBOXD
+import org.w3c.dom.Element
+
+/**
+ * Build-time surface theme. Writes the chosen palette straight into
+ * `res/values/colors.xml` and `res/values-night/colors.xml` inside the APK,
+ * so it works on every Android version — including pre-12 where the runtime
+ * `ResourcesLoader` overlay the "Appearance" patch uses doesn't exist.
+ *
+ * The trade-off: the choice is fixed at patch time. Changing theme later means
+ * re-patching. The in-app "Appearance" theme picker greys itself out when this
+ * patch is applied, and vice versa — the two would fight over the same resources.
+ */
+@Suppress("unused")
+val buildTimeThemePatch = resourcePatch(
+    name = "Theme (baked in)",
+    description = "Bakes a dark surface theme directly into the APK at patch time. Works on " +
+        "every Android version, including below 12 where the runtime \"Appearance\" theme " +
+        "picker can't run. Changing theme later requires re-patching.",
+    default = false,
+) {
+    compatibleWith(COMPATIBILITY_LETTERBOXD)
+
+    val theme by stringOption(
+        key = "theme",
+        default = "stock",
+        values = mapOf(
+            "Stock (Letterboxd's own colours)" to "stock",
+            "Pure Black (OLED)" to "oled",
+            "Purple" to "purple",
+            "Midnight Blue" to "midnight",
+        ),
+        title = "Theme",
+        description = "Which surface theme to bake into the APK.",
+    )
+
+    execute {
+        val mode = theme ?: "stock"
+        if (mode == "stock") return@execute // leave colours alone
+
+        val palette: Map<String, String> = when (mode) {
+            "oled" -> OLED_BAKED
+            "purple" -> PURPLE_SURFACES
+            "midnight" -> MIDNIGHT_SURFACES
+            else -> return@execute
+        }
+
+        // Values are written to both the day and night variants. Letterboxd's dark theme is
+        // always active, but keeping both in sync avoids a flash if a future app build ever reads
+        // the day one. Resources that don't exist in a given file are silently skipped.
+        for (path in listOf("res/values/colors.xml", "res/values-night/colors.xml")) {
+            document(path).use { document ->
+                val resources = document.documentElement
+                    ?: throw PatchException("$path has no root element")
+                palette.forEach { (name, hex) ->
+                    writeColorIfPresent(document, resources, name, hex)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Writes [hex] to the existing `<color name="...">` entry named [name]. Does nothing if the
+ * resource is not present in the given file — Letterboxd's resource set varies between versions,
+ * so a strict "must exist" check would break on some APKs. Missing entries are simply ignored;
+ * the palette is best-effort by design.
+ */
+private fun writeColorIfPresent(
+    document: org.w3c.dom.Document,
+    resources: Element,
+    name: String,
+    hex: String,
+) {
+    val nodes = document.getElementsByTagName("color")
+    for (i in 0 until nodes.length) {
+        val el = nodes.item(i) as Element
+        if (el.getAttribute("name") == name) {
+            el.textContent = hex
+        }
+    }
+}
+
+/**
+ * The OLED palette used by the build-time patch. Mirrors `OLED_SURFACES` in ModThemePatch.kt,
+ * which is private to that file, so it's duplicated here intentionally — one file owns each
+ * patch, and neither should reach into the other's private state.
+ */
+private val OLED_BAKED = mapOf(
+    "gray0D1012" to "#FF000000",
+    "gray14181C" to "#FF000000",
+    "gray181C20" to "#FF000000",
+    "windowBackground" to "#FF000000",
+    "gray1C242C" to "#FF121212",
+    "gray202830" to "#FF121212",
+    "gray283038" to "#FF121212",
+    "gray223344" to "#FF1C1C1C",
+    "gray2C3440" to "#FF1C1C1C",
+    "gray303840" to "#FF1C1C1C",
+    "gray334455" to "#FF2E2E2E",
+    "gray445566" to "#FF2E2E2E",
+    "colorPrimaryDark" to "#FF4A4A4A",
+)

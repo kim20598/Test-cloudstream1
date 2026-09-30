@@ -33,8 +33,8 @@ final class ModSettingsView extends ScrollView {
     private static final String[] CONFETTI_COLOR_LABELS = { "Accent", "Letterboxd colors", "Classic red" };
     private static final String[] CONFETTI_COLOR_VALUES = { "accent", "letterboxd", "red" };
 
-    private static final String[] STREAMING_APP_LABELS = { "Stremio", "Nuvio" };
-    private static final String[] STREAMING_APP_VALUES = { "stremio", "nuvio" };
+    private static final String[] STREAMING_APP_LABELS = { "Stremio", "Nuvio", "CloudStream" };
+    private static final String[] STREAMING_APP_VALUES = { "stremio", "nuvio", "cloudstream" };
 
 
     private final Context ctx;
@@ -177,7 +177,7 @@ final class ModSettingsView extends ScrollView {
         header("Streaming");
         final PillToggle openInPlayer = new PillToggle(ctx);
         column.addView(toggleRow(openInPlayer, "Open in player",
-                "Opens the film in streaming apps like Stremio or Nuvio",
+                "Opens the film in streaming apps like Stremio, Nuvio, or CloudStream",
                 Prefs.KEY_OPEN_IN_PLAYER, false, false));
         streamingAppRow = choiceRow("Streaming app", null,
                 labelFor(STREAMING_APP_LABELS, STREAMING_APP_VALUES, Prefs.streamingApp()),

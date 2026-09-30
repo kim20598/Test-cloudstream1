@@ -1,10 +1,10 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "patches": [
     {
       "name": "Appearance",
-      "description": "In-app appearance controls, adjustable from the Letterboxd Mods screen without re-patching: a true-black OLED surface, a custom accent colour (presets or any hex), and the bottom-navigation selected style. Applied at runtime via resource overlays on Android 12 and later. Needs the \"Mod settings\" patch. If the separate \"Material You theme\" patch is also applied, its OLED and nav-bar-match switches are disabled here automatically — the two theming systems can't run at once.",
+      "description": "In-app appearance controls, adjustable from the Letterboxd Mods screen without re-patching: a dark surface theme (Pure Black / Purple / Midnight Blue), a custom accent colour (presets or any hex), and the bottom-navigation selected style. Applied at runtime via resource overlays on Android 12 and later. Needs the \"Mod settings\" patch. If the separate \"Material You theme\" patch is also applied, its OLED and nav-bar-match switches are disabled here automatically — the two theming systems can't run at once.",
       "default": true,
       "dependencies": [
         "ResourcePatch",

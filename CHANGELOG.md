@@ -1,3 +1,10 @@
+## [2.6.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.5.0...v2.6.0) (2026-09-30)
+
+### ✨ New Features
+
+* add Purple and Midnight Blue themes (Android 12+) ([ba0dfbf](https://github.com/kim20598/Test-cloudstream1/commit/ba0dfbfa97b9ed61cb0bc1d72ef1c5ee463fb018))
+* add Purple and Midnight Blue themes (Android 12+) ([90d90b5](https://github.com/kim20598/Test-cloudstream1/commit/90d90b58bfb531f9faacf9c98a47fba590ef3774))
+
 ## [2.5.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.4.1...v2.5.0) (2026-09-30)
 
 ### ✨ New Features

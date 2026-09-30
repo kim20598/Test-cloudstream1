@@ -1,3 +1,9 @@
+## [2.7.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.6.0...v2.7.0) (2026-09-30)
+
+### ✨ New Features
+
+* add build-time theme patch for Android 11 and below ([e24d7d6](https://github.com/kim20598/Test-cloudstream1/commit/e24d7d64f7d1788c879e73d83e81f3bef689fd00))
+
 ## [2.6.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.5.0...v2.6.0) (2026-09-30)
 
 ### ✨ New Features

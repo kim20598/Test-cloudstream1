@@ -1,6 +1,6 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "patches": [
     {
       "name": "Appearance",
@@ -188,6 +188,47 @@
             "Tap-to-show link": "link",
             "Shimmer (Telegram-style)": "shimmer",
             "Tap to burst": "burst"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Theme (baked in)",
+      "description": "Bakes a dark surface theme directly into the APK at patch time. Works on every Android version, including below 12 where the runtime \"Appearance\" theme picker can't run. Changing theme later requires re-patching.",
+      "default": false,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
+          "packageName": "com.letterboxd.letterboxd",
+          "name": "Letterboxd",
+          "description": null,
+          "apkFileType": "APK",
+          "appIconColor": "#FF8000",
+          "signatures": null,
+          "targets": [
+            {
+              "version": null,
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": [
+        {
+          "key": "theme",
+          "title": "Theme",
+          "description": "Which surface theme to bake into the APK.",
+          "required": false,
+          "type": "kotlin.String",
+          "default": "stock",
+          "values": {
+            "Stock (Letterboxd's own colours)": "stock",
+            "Pure Black (OLED)": "oled",
+            "Purple": "purple",
+            "Midnight Blue": "midnight"
           }
         }
       ]

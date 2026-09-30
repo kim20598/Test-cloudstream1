@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-09-30T20:43:37",
-  "description": "## [2.7.1](https://github.com/kim20598/Test-cloudstream1/compare/v2.7.0...v2.7.1) (2026-09-30)\n\n### 🐛 Bug Fixes\n\n* inline resource existence check in baked theme patch ([193c85c](https://github.com/kim20598/Test-cloudstream1/commit/193c85c207d37966d2a4f5a101aae02b825ec7fe))\n* skip missing values-night/colors.xml in baked theme patch ([117d535](https://github.com/kim20598/Test-cloudstream1/commit/117d5354bb0bc58f7d28e9512d3d02cca4ed12e5))",
-  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.7.1/patches-2.7.1.mpp",
+  "created_at": "2026-09-30T21:53:42",
+  "description": "## [2.8.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.7.1...v2.8.0) (2026-09-30)\n\n### 🐛 Bug Fixes\n\n* simplify patron fingerprint to return-type only ([2950efa](https://github.com/kim20598/Test-cloudstream1/commit/2950efa932bf1822c84bd5ee596759e3e0e0476b))\n* use correct Fingerprint API in unlock patron patch ([e15b3fd](https://github.com/kim20598/Test-cloudstream1/commit/e15b3fd3d0b7e77f715a03342ac7b78476481069))\n\n### ✨ New Features\n\n* add local Patron unlock patch ([29f9c17](https://github.com/kim20598/Test-cloudstream1/commit/29f9c1792083106e06c6ee568a2dc6d9276bef2f))",
+  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.8.0/patches-2.8.0.mpp",
   "signature_download_url": "",
-  "version": "2.7.1"
+  "version": "2.8.0"
 }

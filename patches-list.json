@@ -1,6 +1,6 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "2.7.1",
+  "version": "2.8.0",
   "patches": [
     {
       "name": "Appearance",
@@ -96,6 +96,32 @@
           }
         }
       ]
+    },
+    {
+      "name": "Force Patron (local)",
+      "description": "Makes the app treat your own account as Patron locally, so Patron-only screens and pickers appear. Purely cosmetic — the server still knows the real tier, so anything that saves (posters, backdrops) or fetches Patron-only data will not actually work. Off by default.",
+      "default": false,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
+          "packageName": "com.letterboxd.letterboxd",
+          "name": "Letterboxd",
+          "description": null,
+          "apkFileType": "APK",
+          "appIconColor": "#FF8000",
+          "signatures": null,
+          "targets": [
+            {
+              "version": null,
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
     },
     {
       "name": "Hide ads",

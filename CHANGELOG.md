@@ -1,3 +1,14 @@
+## [2.8.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.7.1...v2.8.0) (2026-09-30)
+
+### 🐛 Bug Fixes
+
+* simplify patron fingerprint to return-type only ([2950efa](https://github.com/kim20598/Test-cloudstream1/commit/2950efa932bf1822c84bd5ee596759e3e0e0476b))
+* use correct Fingerprint API in unlock patron patch ([e15b3fd](https://github.com/kim20598/Test-cloudstream1/commit/e15b3fd3d0b7e77f715a03342ac7b78476481069))
+
+### ✨ New Features
+
+* add local Patron unlock patch ([29f9c17](https://github.com/kim20598/Test-cloudstream1/commit/29f9c1792083106e06c6ee568a2dc6d9276bef2f))
+
 ## [2.7.1](https://github.com/kim20598/Test-cloudstream1/compare/v2.7.0...v2.7.1) (2026-09-30)
 
 ### 🐛 Bug Fixes

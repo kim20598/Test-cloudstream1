@@ -231,6 +231,7 @@ The bundle is written to `patches/build/libs/patches-*.mpp`; apply it with
 
 Handled by `release.yml` and semantic-release. Do not tag or upload releases by
 hand, and do not edit the generated files (`patches-list.json`,
+
 `patches-bundle.json`, `CHANGELOG.md`, or the patch table above).
 
 - Work on the **`dev`** branch with

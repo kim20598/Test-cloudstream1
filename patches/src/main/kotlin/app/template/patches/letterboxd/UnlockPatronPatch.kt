@@ -1,28 +1,27 @@
 package app.template.patches.letterboxd
 
+import app.morphe.patcher.Fingerprint
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
-import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.extensions.InstructionExtensions.replaceInstruction
 import app.morphe.patcher.patch.bytecodePatch
-import app.morphe.patcher.patch.methodFingerprint
 import app.template.patches.shared.Constants.COMPATIBILITY_LETTERBOXD
-import com.android.tools.smali.dexlib2.AccessFlags
 
 /**
  * Forces the current user's `MemberStatus` to `Patron` locally, so Patron-only UI (poster and
- * backdrop pickers, custom lists UI, etc.) appears without the account actually being a Patron.
+ * backdrop pickers, etc.) appears without the account actually being a Patron.
  *
- * <p>This is a local-only change. Anything the server validates — saving a poster, listing stats,
- * push notifications — still goes through Letterboxd's servers, sees a non-Patron account, and
- * behaves accordingly. The unlock is cosmetic: it makes the app *try* to show the feature.
- *
- * <p>Hooks {@code Member.getMemberStatus()} — the getter used for the logged-in user's own
- * profile — and rewrites its body to return the `Patron` enum constant unconditionally.
- *
- * <p>Note: {@code MemberSummary.getMemberStatus()} (the sibling class used in lists and feeds for
- * *other* users) is intentionally left alone, so this patch does not make every other account on
- * Letterboxd appear as a Patron.
+ * Local-only. Server-validated actions (saving a poster, stats data, push notifications) still
+ * see a non-Patron account.
  */
+private val memberGetMemberStatusFingerprint = Fingerprint(
+    returnType = "Lcom/letterboxd/api/model/MemberStatus;",
+    accessFlags = 0x11, // public final
+    strings = listOf("getMemberStatus"),
+    customFingerprint = { method, classDef ->
+        classDef.type == "Lcom/letterboxd/api/model/Member;"
+    },
+)
+
 @Suppress("unused")
 val unlockPatronPatch = bytecodePatch(
     name = "Force Patron (local)",
@@ -35,25 +34,18 @@ val unlockPatronPatch = bytecodePatch(
     compatibleWith(COMPATIBILITY_LETTERBOXD)
 
     execute {
-        val getMemberStatus = methodFingerprint(
-            returnType = "Lcom/letterboxd/api/model/MemberStatus;",
-            accessFlags = AccessFlags.PUBLIC or AccessFlags.FINAL,
-            strings = listOf("getMemberStatus"),
-            customFingerprint = { method, classDef ->
-                classDef.type == "Lcom/letterboxd/api/model/Member;"
-            },
-        )
-
-        getMemberStatus.method.apply {
+        memberGetMemberStatusFingerprint.method.apply {
             // Replace the body: return MemberStatus.Patron unconditionally.
-            // `MemberStatus.Patron` is a static enum constant, so `sget-object` fetches it.
-            instructions().clear()
-            addInstructions(
+            //
+            // Original smali was:
+            //   iget-object v0, p0, Lcom/letterboxd/api/model/Member;->memberStatus:...;
+            //   return-object v0
+            //
+            // We overwrite the first instruction with `sget-object v0, MemberStatus.Patron`,
+            // leaving the trailing `return-object v0` in place — cleaner than wiping the method.
+            replaceInstruction(
                 0,
-                """
-                    sget-object v0, Lcom/letterboxd/api/model/MemberStatus;->Patron:Lcom/letterboxd/api/model/MemberStatus;
-                    return-object v0
-                """.trimIndent(),
+                "sget-object v0, Lcom/letterboxd/api/model/MemberStatus;->Patron:Lcom/letterboxd/api/model/MemberStatus;",
             )
         }
     }

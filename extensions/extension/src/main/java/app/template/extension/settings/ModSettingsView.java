@@ -73,11 +73,20 @@ final class ModSettingsView extends ScrollView {
 
         boolean themeAvailable = ModTheme.isSupported();
 
+        // If the build-time "Theme (baked in)" patch wrote colours into the APK, the in-app theme
+        // picker can't do anything — the resources are already frozen. Detect that via a marker
+        // colour the patch writes, and grey the row out with an explanatory subtitle.
+        boolean bakedThemeActive = ctx.getResources().getIdentifier(
+                "morphe_baked_theme", "color", ctx.getPackageName()) != 0;
+
         boolean materialYouActive = ctx.getResources().getIdentifier(
                 "morphe_my_surface", "color", ctx.getPackageName()) != 0;
 
         header("Theme");
-        if (!themeAvailable) {
+        if (bakedThemeActive) {
+            column.addView(disabledRow("Theme", "Baked at patch time — re-patch to change",
+                    bakedThemeExplainer()));
+        } else if (!themeAvailable) {
             column.addView(disabledRow("Theme", "Needs Android 12 or newer", null));
         } else if (materialYouActive) {
             column.addView(disabledRow("Theme", "Disabled — tap to find out why",
@@ -463,6 +472,19 @@ final class ModSettingsView extends ScrollView {
                         "Handled by Material You",
                         "This is off because you also patched \"Material You theme\" — it already " +
                                 "controls this. Disable that patch to use OLED here.",
+                        "Got it", null, null, null);
+            }
+        };
+    }
+
+    private Runnable bakedThemeExplainer() {
+        return new Runnable() {
+            @Override public void run() {
+                ModDialog.show(ctx,
+                        "Theme baked into the APK",
+                        "You patched Letterboxd with the \"Theme (baked in)\" patch, so the surface " +
+                                "theme is already fixed. To change it, re-patch and pick a different " +
+                                "theme in the patcher.",
                         "Got it", null, null, null);
             }
         };

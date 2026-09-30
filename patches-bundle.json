@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-09-30T17:37:32",
-  "description": "## [2.3.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.2.0...v2.3.0) (2026-09-30)\n\n### ✨ New Features\n\n* add CloudStream support ([c442c75](https://github.com/kim20598/Test-cloudstream1/commit/c442c75dd41f16ad9e07657e22367c57b938c555))",
-  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.3.0/patches-2.3.0.mpp",
+  "created_at": "2026-09-30T17:58:55",
+  "description": "## [2.4.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.3.0...v2.4.0) (2026-09-30)\n\n### ✨ New Features\n\n* add CloudStream support ([bd7c548](https://github.com/kim20598/Test-cloudstream1/commit/bd7c548524bd9f0b8a2f897ea122fd2bb7b429b3))\n* add CloudStream support ([0e40573](https://github.com/kim20598/Test-cloudstream1/commit/0e4057345aadb5f1aea8d7990fe6810f71f327a5))",
+  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.4.0/patches-2.4.0.mpp",
   "signature_download_url": "",
-  "version": "2.3.0"
+  "version": "2.4.0"
 }

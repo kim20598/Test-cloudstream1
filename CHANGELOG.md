@@ -1,3 +1,10 @@
+## [2.7.1](https://github.com/kim20598/Test-cloudstream1/compare/v2.7.0...v2.7.1) (2026-09-30)
+
+### 🐛 Bug Fixes
+
+* inline resource existence check in baked theme patch ([193c85c](https://github.com/kim20598/Test-cloudstream1/commit/193c85c207d37966d2a4f5a101aae02b825ec7fe))
+* skip missing values-night/colors.xml in baked theme patch ([117d535](https://github.com/kim20598/Test-cloudstream1/commit/117d5354bb0bc58f7d28e9512d3d02cca4ed12e5))
+
 ## [2.7.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.6.0...v2.7.0) (2026-09-30)
 
 ### ✨ New Features

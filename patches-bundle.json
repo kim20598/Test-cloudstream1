@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-09-30T20:02:30",
-  "description": "## [2.7.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.6.0...v2.7.0) (2026-09-30)\n\n### ✨ New Features\n\n* add build-time theme patch for Android 11 and below ([e24d7d6](https://github.com/kim20598/Test-cloudstream1/commit/e24d7d64f7d1788c879e73d83e81f3bef689fd00))",
-  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.7.0/patches-2.7.0.mpp",
+  "created_at": "2026-09-30T20:43:37",
+  "description": "## [2.7.1](https://github.com/kim20598/Test-cloudstream1/compare/v2.7.0...v2.7.1) (2026-09-30)\n\n### 🐛 Bug Fixes\n\n* inline resource existence check in baked theme patch ([193c85c](https://github.com/kim20598/Test-cloudstream1/commit/193c85c207d37966d2a4f5a101aae02b825ec7fe))\n* skip missing values-night/colors.xml in baked theme patch ([117d535](https://github.com/kim20598/Test-cloudstream1/commit/117d5354bb0bc58f7d28e9512d3d02cca4ed12e5))",
+  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.7.1/patches-2.7.1.mpp",
   "signature_download_url": "",
-  "version": "2.7.0"
+  "version": "2.7.1"
 }

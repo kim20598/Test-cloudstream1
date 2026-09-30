@@ -73,8 +73,16 @@ val buildTimeThemePatch = resourcePatch(
         // ever reads the day one. Not every APK ships both files — `values-night` is absent on
         // several Letterboxd versions, and the patcher's `document(...)` throws on a missing path,
         // so we only process the ones that are actually present.
+        //
+        // `get(...)` is a ResourcePatchContext method, only callable inside this `execute` block,
+        // which is why the existence check lives here instead of in a helper function.
         for (path in listOf("res/values/colors.xml", "res/values-night/colors.xml")) {
-            if (!fileExists(path)) continue
+            val exists = try {
+                get(path).isFile
+            } catch (t: Throwable) {
+                false
+            }
+            if (!exists) continue
             document(path).use { document ->
                 val resources = document.documentElement
                     ?: throw PatchException("$path has no root element")
@@ -85,14 +93,6 @@ val buildTimeThemePatch = resourcePatch(
         }
     }
 }
-
-/** True if [path] exists in the patcher's virtual resource tree. */
-private fun fileExists(path: String): Boolean =
-    try {
-        get(path).isFile
-    } catch (t: Throwable) {
-        false
-    }
 
 /**
  * Writes [hex] to the existing `<color name="...">` entry named [name]. Does nothing if the

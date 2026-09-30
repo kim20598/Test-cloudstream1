@@ -1,3 +1,9 @@
+## [2.4.1](https://github.com/kim20598/Test-cloudstream1/compare/v2.4.0...v2.4.1) (2026-09-30)
+
+### 🐛 Bug Fixes
+
+* open CloudStream app directly instead of unsupported deep link ([b425858](https://github.com/kim20598/Test-cloudstream1/commit/b425858fc857771475e03df67e7a60a8eaa8e11a))
+
 ## [2.4.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.3.0...v2.4.0) (2026-09-30)
 
 ### ✨ New Features

@@ -27,8 +27,8 @@ import java.util.WeakHashMap;
 /**
  * The Android 12+ half of {@link ModTheme}: copies the chosen overlay {@code .arsc} files out of
  * assets, wraps each in a {@link ResourcesLoader}, and adds the whole set to each {@link Resources}
- * instance once. Later loaders win, so the accent overlay is added after OLED (they touch disjoint
- * resources, so ordering is only a safety net).
+ * instance once. Later loaders win, so the accent overlay is added after the surface theme (they
+ * touch disjoint resources, so ordering is only a safety net).
  *
  * <p>Restart-based: the loader set is fixed at process start, there is no removal path.
  */
@@ -39,6 +39,20 @@ final class ModThemeApi31 {
     private static final Set<Resources> APPLIED =
             Collections.newSetFromMap(new WeakHashMap<Resources, Boolean>());
     private static boolean prepared;
+
+    /**
+     * Runtime surface themes -> asset file name. Keys must match {@code Prefs.surface()} values
+     * and the file names emitted by the "Appearance" patch:
+     *   oled     -> morphe/oled.arsc
+     *   purple   -> morphe/theme_purple.arsc
+     *   midnight -> morphe/theme_midnight.arsc
+     * {@code stock} is intentionally absent — no overlay, Letterboxd's own colours.
+     */
+    private static final Map<String, String> SURFACE_ASSETS = new java.util.LinkedHashMap<String, String>() {{
+        put("oled", "morphe/oled.arsc");
+        put("purple", "morphe/theme_purple.arsc");
+        put("midnight", "morphe/theme_midnight.arsc");
+    }};
 
     private ModThemeApi31() {}
 
@@ -53,8 +67,12 @@ final class ModThemeApi31 {
         Context app = context.getApplicationContext();
         if (app == null) app = context;
 
-        if ("oled".equals(surface)) {
-            addAssetLoader(app, "morphe/oled.arsc", "morphe-oled.arsc");
+        String surfaceAsset = SURFACE_ASSETS.get(surface);
+        if (surfaceAsset != null) {
+            // Cache name mirrors the asset path so a later preference change on restart picks the
+            // right file even if an old cached copy from a previous theme is still on disk.
+            String cacheName = "morphe-" + surfaceAsset.substring("morphe/".length());
+            addAssetLoader(app, surfaceAsset, cacheName);
         }
         if ("custom".equals(accent)) {
             String hex = Prefs.getString(Prefs.KEY_THEME_ACCENT_HEX, "");

@@ -1,3 +1,9 @@
+## [2.3.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.2.0...v2.3.0) (2026-09-30)
+
+### ✨ New Features
+
+* add CloudStream support ([c442c75](https://github.com/kim20598/Test-cloudstream1/commit/c442c75dd41f16ad9e07657e22367c57b938c555))
+
 ## [2.2.0](https://github.com/mvaishak/letterboxd-morphe-patches/compare/v2.1.1...v2.2.0) (2026-09-17)
 
 ### ✨ New Features

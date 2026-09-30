@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-09-17T14:21:55",
-  "description": "## [2.2.0](https://github.com/mvaishak/letterboxd-morphe-patches/compare/v2.1.1...v2.2.0) (2026-09-17)\n\n### ✨ New Features\n\n* Add \"Report an issue\" and \"Full changelog\" links to Mod settings ([1bbef53](https://github.com/mvaishak/letterboxd-morphe-patches/commit/1bbef5323fc70acee84419b1400c139080935182))",
-  "download_url": "https://github.com/mvaishak/letterboxd-morphe-patches/releases/download/v2.2.0/patches-2.2.0.mpp",
+  "created_at": "2026-09-30T17:37:32",
+  "description": "## [2.3.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.2.0...v2.3.0) (2026-09-30)\n\n### ✨ New Features\n\n* add CloudStream support ([c442c75](https://github.com/kim20598/Test-cloudstream1/commit/c442c75dd41f16ad9e07657e22367c57b938c555))",
+  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.3.0/patches-2.3.0.mpp",
   "signature_download_url": "",
-  "version": "2.2.0"
+  "version": "2.3.0"
 }

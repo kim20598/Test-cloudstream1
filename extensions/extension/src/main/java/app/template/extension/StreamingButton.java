@@ -28,11 +28,10 @@ import java.util.regex.Pattern;
 
 /**
  * "Open in player" — adds a small, icon-only button next to Trailer on a film's page that opens
- * the film in Stremio or Nuvio (Mod settings' "Streaming app" choice), tinted with the current
- * accent colour. Injected at the top of {@code FilmHeaderFragment.onViewCreated}.
+ * the film in Stremio, Nuvio, or CloudStream (Mod settings' "Streaming app" choice), tinted with
+ * the current accent colour. Injected at the top of {@code FilmHeaderFragment.onViewCreated}.
  *
- * <p>Both take a deep link keyed on the IMDb id. (Plex was offered here once but dropped — it has
- * no IMDb-to-title deep link; resolving a film needs the user's own Plex server and token.)
+ * <p>All three take a deep link keyed on the IMDb id.
  *
  * <p>Deliberately icon-only and compact: an earlier text-labelled version ("STREMIO" as a full
  * pill, matching trailer_button's width) overflowed that row on real devices — the row's width is
@@ -165,7 +164,7 @@ public final class StreamingButton {
 
             MaterialButton button = new MaterialButton(ctx);
             button.setTag(TAG);
-            button.setContentDescription("nuvio".equals(app) ? "Open in Nuvio" : "Open in Stremio");
+            button.setContentDescription(labelFor(app));
             button.setText(null);
             button.setInsetTop(0);
             button.setInsetBottom(0);
@@ -198,17 +197,34 @@ public final class StreamingButton {
         }
     }
 
+    private static String labelFor(String app) {
+        if ("nuvio".equals(app)) return "Open in Nuvio";
+        if ("cloudstream".equals(app)) return "Open in CloudStream";
+        return "Open in Stremio";
+    }
+
     private static void launch(View v, String imdbId, String app) {
         try {
             // - Stremio: stremio:///detail/movie/<imdbId>/<imdbId> (id doubled, its own convention).
             // - Nuvio: nuvio://movie/<imdbId> — its stremio:// filter is for addon installs only
             //   (host must look like a domain), never meta lookups, so Stremio's own URI silently
             //   no-ops there.
-            Uri uri = "nuvio".equals(app)
-                    ? Uri.parse("nuvio://movie/" + imdbId)
-                    : Uri.parse("cloudstream://movie/" + imdbId);
-                    : Uri.parse("stremio:///detail/movie/" + imdbId + "/" + imdbId);
-            v.getContext().startActivity(new Intent(Intent.ACTION_VIEW, uri));
+            // - CloudStream: cloudstream://movie/<imdbId> — verify against CloudStream's own
+            //   deep-link handler; change the scheme/host here if it expects something else.
+            Uri uri;
+            if ("nuvio".equals(app)) {
+                uri = Uri.parse("nuvio://movie/" + imdbId);
+            } else if ("cloudstream".equals(app)) {
+                uri = Uri.parse("cloudstream://movie/" + imdbId);
+            } else {
+                uri = Uri.parse("stremio:///detail/movie/" + imdbId + "/" + imdbId);
+            }
+
+            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            if ("cloudstream".equals(app)) {
+                intent.setPackage("com.lagradost.cloudstream3");
+            }
+            v.getContext().startActivity(intent);
         } catch (ActivityNotFoundException ignored) {
         } catch (Throwable ignored) {
         }

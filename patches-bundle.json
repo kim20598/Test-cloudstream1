@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-09-30T18:14:51",
-  "description": "## [2.4.1](https://github.com/kim20598/Test-cloudstream1/compare/v2.4.0...v2.4.1) (2026-09-30)\n\n### 🐛 Bug Fixes\n\n* open CloudStream app directly instead of unsupported deep link ([b425858](https://github.com/kim20598/Test-cloudstream1/commit/b425858fc857771475e03df67e7a60a8eaa8e11a))",
-  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.4.1/patches-2.4.1.mpp",
+  "created_at": "2026-09-30T19:03:02",
+  "description": "## [2.5.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.4.1...v2.5.0) (2026-09-30)\n\n### ✨ New Features\n\n* add Purple and Midnight Blue themes (Android 12+) ([8069344](https://github.com/kim20598/Test-cloudstream1/commit/8069344c9714172c5247d345870207bc67893d52))",
+  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.5.0/patches-2.5.0.mpp",
   "signature_download_url": "",
-  "version": "2.4.1"
+  "version": "2.5.0"
 }

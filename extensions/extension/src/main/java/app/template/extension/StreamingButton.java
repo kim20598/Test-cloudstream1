@@ -31,7 +31,8 @@ import java.util.regex.Pattern;
  * the film in Stremio, Nuvio, or CloudStream (Mod settings' "Streaming app" choice), tinted with
  * the current accent colour. Injected at the top of {@code FilmHeaderFragment.onViewCreated}.
  *
- * <p>All three take a deep link keyed on the IMDb id.
+ * <p>Stremio and Nuvio take a deep link keyed on the IMDb id; CloudStream doesn't support
+ * IMDb-keyed deep links, so its button just opens the CloudStream app.
  *
  * <p>Deliberately icon-only and compact: an earlier text-labelled version ("STREMIO" as a full
  * pill, matching trailer_button's width) overflowed that row on real devices — the row's width is
@@ -205,25 +206,26 @@ public final class StreamingButton {
 
     private static void launch(View v, String imdbId, String app) {
         try {
-            // - Stremio: stremio:///detail/movie/<imdbId>/<imdbId> (id doubled, its own convention).
-            // - Nuvio: nuvio://movie/<imdbId> — its stremio:// filter is for addon installs only
-            //   (host must look like a domain), never meta lookups, so Stremio's own URI silently
-            //   no-ops there.
-            // - CloudStream: cloudstream://movie/<imdbId> — verify against CloudStream's own
-            //   deep-link handler; change the scheme/host here if it expects something else.
+            // CloudStream has no IMDb-keyed deep link — just open its app. The user
+            // searches for the title there. Stremio and Nuvio both take deep links.
+            if ("cloudstream".equals(app)) {
+                Intent intent = v.getContext().getPackageManager()
+                        .getLaunchIntentForPackage("com.lagradost.cloudstream3");
+                if (intent != null) {
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    v.getContext().startActivity(intent);
+                }
+                return;
+            }
+
             Uri uri;
             if ("nuvio".equals(app)) {
                 uri = Uri.parse("nuvio://movie/" + imdbId);
-            } else if ("cloudstream".equals(app)) {
-                uri = Uri.parse("cloudstream://movie/" + imdbId);
             } else {
                 uri = Uri.parse("stremio:///detail/movie/" + imdbId + "/" + imdbId);
             }
 
             Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-            if ("cloudstream".equals(app)) {
-                intent.setPackage("com.lagradost.cloudstream3");
-            }
             v.getContext().startActivity(intent);
         } catch (ActivityNotFoundException ignored) {
         } catch (Throwable ignored) {

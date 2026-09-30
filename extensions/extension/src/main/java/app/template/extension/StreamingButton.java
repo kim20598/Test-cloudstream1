@@ -206,6 +206,7 @@ public final class StreamingButton {
             //   no-ops there.
             Uri uri = "nuvio".equals(app)
                     ? Uri.parse("nuvio://movie/" + imdbId)
+                    : Uri.parse("cloudstream://movie/" + imdbId);
                     : Uri.parse("stremio:///detail/movie/" + imdbId + "/" + imdbId);
             v.getContext().startActivity(new Intent(Intent.ACTION_VIEW, uri));
         } catch (ActivityNotFoundException ignored) {

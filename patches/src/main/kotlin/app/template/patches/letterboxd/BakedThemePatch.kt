@@ -6,11 +6,12 @@ import app.morphe.patcher.patch.stringOption
 import app.template.patches.letterboxd.theme.MIDNIGHT_SURFACES
 import app.template.patches.letterboxd.theme.PURPLE_SURFACES
 import app.template.patches.shared.Constants.COMPATIBILITY_LETTERBOXD
+import org.w3c.dom.Document
 import org.w3c.dom.Element
 
 /**
  * Build-time surface theme. Writes the chosen palette straight into
- * `res/values/colors.xml` and `res/values-night/colors.xml` inside the APK,
+ * `res/values/colors.xml` and (when present) `res/values-night/colors.xml` inside the APK,
  * so it works on every Android version — including pre-12 where the runtime
  * `ResourcesLoader` overlay the "Appearance" patch uses doesn't exist.
  *
@@ -52,10 +53,28 @@ val buildTimeThemePatch = resourcePatch(
             else -> return@execute
         }
 
-        // Values are written to both the day and night variants. Letterboxd's dark theme is
-        // always active, but keeping both in sync avoids a flash if a future app build ever reads
-        // the day one. Resources that don't exist in a given file are silently skipped.
+        // Marker resource: presence of this colour tells the runtime code the build-time theme
+        // patch ran, so the in-app theme picker can grey itself out.
+        document("res/values/colors.xml").use { document ->
+            val resources = document.documentElement
+                ?: throw PatchException("res/values/colors.xml has no root element")
+            if (!hasColor(document, "morphe_baked_theme")) {
+                resources.appendChild(
+                    document.createElement("color").apply {
+                        setAttribute("name", "morphe_baked_theme")
+                        textContent = "#FF000000"
+                    }
+                )
+            }
+        }
+
+        // Values are written to both the day and night variants when both exist. Letterboxd's dark
+        // theme is always active, but keeping both in sync avoids a flash if a future app build
+        // ever reads the day one. Not every APK ships both files — `values-night` is absent on
+        // several Letterboxd versions, and the patcher's `document(...)` throws on a missing path,
+        // so we only process the ones that are actually present.
         for (path in listOf("res/values/colors.xml", "res/values-night/colors.xml")) {
+            if (!fileExists(path)) continue
             document(path).use { document ->
                 val resources = document.documentElement
                     ?: throw PatchException("$path has no root element")
@@ -67,6 +86,14 @@ val buildTimeThemePatch = resourcePatch(
     }
 }
 
+/** True if [path] exists in the patcher's virtual resource tree. */
+private fun fileExists(path: String): Boolean =
+    try {
+        get(path).isFile
+    } catch (t: Throwable) {
+        false
+    }
+
 /**
  * Writes [hex] to the existing `<color name="...">` entry named [name]. Does nothing if the
  * resource is not present in the given file — Letterboxd's resource set varies between versions,
@@ -74,7 +101,7 @@ val buildTimeThemePatch = resourcePatch(
  * the palette is best-effort by design.
  */
 private fun writeColorIfPresent(
-    document: org.w3c.dom.Document,
+    document: Document,
     resources: Element,
     name: String,
     hex: String,
@@ -86,6 +113,16 @@ private fun writeColorIfPresent(
             el.textContent = hex
         }
     }
+}
+
+/** True if a `<color name="[name]">` already exists in [document]. */
+private fun hasColor(document: Document, name: String): Boolean {
+    val nodes = document.getElementsByTagName("color")
+    for (i in 0 until nodes.length) {
+        val el = nodes.item(i) as Element
+        if (el.getAttribute("name") == name) return true
+    }
+    return false
 }
 
 /**

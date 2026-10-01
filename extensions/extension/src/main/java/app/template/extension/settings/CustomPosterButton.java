@@ -27,14 +27,14 @@ import java.util.regex.Pattern;
 
 /**
  * Runtime for the "Custom poster" feature. Three override targets — poster, film backdrop,
- * profile backdrop — each using the appropriate timing:
+ * profile backdrop.
  *
  * <ul>
  *   <li><b>Poster</b> uses {@code PosterView.setImageURL()} synchronously inside the hook.
  *       No gap, no flicker, server image never appears.</li>
- *   <li><b>Film backdrop</b> uses {@code postDelayed(1)} so our Coil load lands one frame
- *       after the host method's Glide request has already been queued. Cancels Glide first.</li>
- *   <li><b>Profile backdrop</b> same as film backdrop.</li>
+ *   <li><b>Film backdrop</b> and <b>profile backdrop</b> use {@link #applyImageOverrideDeferred}
+ *       — a synchronous cancel-Glide + Coil load, followed by a second pass one or two frames
+ *       later to catch any Glide request that was already queued before our hook ran.</li>
  * </ul>
  */
 public final class CustomPosterButton {
@@ -64,7 +64,6 @@ public final class CustomPosterButton {
             String customUrl = CustomPosterStore.getOverride(slug);
             if (customUrl == null || customUrl.isEmpty()) return;
 
-            // Synchronous — setImageURL handles its own ImageView, no post() needed.
             URL url = new URL(customUrl);
             posterView.getClass().getMethod("setImageURL", URL.class).invoke(posterView, url);
         } catch (Throwable ignored) {}
@@ -157,7 +156,7 @@ public final class CustomPosterButton {
         } catch (Throwable t) { return null; }
     }
 
-    // --- 3: film backdrop override (postDelayed for stability) ----------
+    // --- 3: film backdrop override --------------------------------------
 
     public static void maybeOverrideFilmBackdrop(Object binding, Object film) {
         try {
@@ -194,12 +193,34 @@ public final class CustomPosterButton {
     }
 
     /**
-     * Cancel any in-flight Glide request, then Coil-load the override. Runs one frame after
-     * the calling hook returns so the host method's own Glide request has been queued and
-     * can be properly cancelled before we take over.
+     * The one-shot replacement mechanism used by film backdrop and profile backdrop.
+     *
+     * <p>The host method ({@code configureBackdrop} / {@code applyMember}) fires its own Glide
+     * load into the same ImageView. Depending on timing, that Glide load may:
+     *
+     * <ol>
+     *   <li>Already be delivered (drawable set) by the time we run — synchronously cancelling
+     *       Glide and loading via Coil in step 1 is enough.</li>
+     *   <li>Be queued but not yet delivered — our synchronous step 1 cancels it, but Glide's
+     *       cached delivery can still land a frame or two later and overwrite us. The deferred
+     *       second pass at 32ms re-cancels and re-loads, so by two frames later our image is
+     *       definitively the one shown.</li>
+     * </ol>
+     *
+     * <p>Net effect: the server backdrop is visible for at most ~2 frames before ours replaces
+     * it. At 60 fps that's ~33ms, below the perception threshold for most viewers.
      */
     private static void applyImageOverrideDeferred(final ImageView iv, final String url) {
         if (iv == null || url == null || url.isEmpty()) return;
+
+        // Immediate pass — cancel any pending Glide request and load ours synchronously.
+        try {
+            cancelGlide(iv);
+            CoilLoader.load(iv.getContext(), url, iv);
+        } catch (Throwable ignored) {}
+
+        // Deferred pass — one or two frames later, in case the host method queued its own
+        // Glide request before we ran. Re-cancel and re-load so we definitively win.
         MAIN.postDelayed(new Runnable() {
             @Override public void run() {
                 try {
@@ -207,7 +228,7 @@ public final class CustomPosterButton {
                     CoilLoader.load(iv.getContext(), url, iv);
                 } catch (Throwable ignored) {}
             }
-        }, 1);
+        }, 32);
     }
 
     private static void cancelGlide(View view) {
@@ -465,5 +486,5 @@ public final class CustomPosterButton {
         catch (Throwable ignored) {}
     }
 
-    public static void __cacheBustV11() {}
+    public static void __cacheBustV12() {}
 }

@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-01T16:44:41",
-  "description": "## [2.15.1](https://github.com/kim20598/Test-cloudstream1/compare/v2.15.0...v2.15.1) (2026-10-01)\n\n### 🐛 Bug Fixes\n\n* cancel pending Glide request before Coil override; simplify row injection ([08c8bfd](https://github.com/kim20598/Test-cloudstream1/commit/08c8bfdb7f81b64f052ee1a487020b3bce6c4ed4))",
-  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.15.1/patches-2.15.1.mpp",
+  "created_at": "2026-10-01T17:24:55",
+  "description": "## [2.15.2](https://github.com/kim20598/Test-cloudstream1/compare/v2.15.1...v2.15.2) (2026-10-01)\n\n### 🐛 Bug Fixes\n\n* correct smali AccessFlags import path ([74ea412](https://github.com/kim20598/Test-cloudstream1/commit/74ea4125a91776ba68dd555082269d26165d4b3e))\n* restore poster re-render hook; use FragmentManager for instant backdrop refresh ([9c0a10c](https://github.com/kim20598/Test-cloudstream1/commit/9c0a10cb32057ca3efa1433392d07bf694af6c4c))",
+  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.15.2/patches-2.15.2.mpp",
   "signature_download_url": "",
-  "version": "2.15.1"
+  "version": "2.15.2"
 }

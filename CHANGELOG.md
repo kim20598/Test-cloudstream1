@@ -1,3 +1,10 @@
+## [2.15.2](https://github.com/kim20598/Test-cloudstream1/compare/v2.15.1...v2.15.2) (2026-10-01)
+
+### 🐛 Bug Fixes
+
+* correct smali AccessFlags import path ([74ea412](https://github.com/kim20598/Test-cloudstream1/commit/74ea4125a91776ba68dd555082269d26165d4b3e))
+* restore poster re-render hook; use FragmentManager for instant backdrop refresh ([9c0a10c](https://github.com/kim20598/Test-cloudstream1/commit/9c0a10cb32057ca3efa1433392d07bf694af6c4c))
+
 ## [2.15.1](https://github.com/kim20598/Test-cloudstream1/compare/v2.15.0...v2.15.1) (2026-10-01)
 
 ### 🐛 Bug Fixes

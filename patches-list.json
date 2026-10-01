@@ -1,6 +1,6 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "2.15.1",
+  "version": "2.15.2",
   "patches": [
     {
       "name": "Appearance",
@@ -59,7 +59,7 @@
     },
     {
       "name": "Custom poster (local)",
-      "description": "Adds \"Custom poster\", \"Custom backdrop\", and \"Use as profile backdrop\" rows to a film's action sheet. Custom images are stored locally, applied instantly, and included in Mod settings export/import. Also unlocks all Pro app icons (a purely local toggle).",
+      "description": "Adds \"Custom poster\", \"Custom backdrop\", and \"Use as profile backdrop\" rows to a film's action sheet. Custom images are stored locally, applied instantly, persist across navigation, and are included in Mod settings export/import. Also unlocks all Pro app icons (a purely local toggle).",
       "default": false,
       "dependencies": [],
       "compatiblePackages": [

@@ -1,69 +1,66 @@
 package app.template.extension.settings;
 
 import android.content.Context;
-import android.view.View;
-import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 
 import java.lang.reflect.Method;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Runtime for the "Custom poster" entry point.
  *
  * <p>The Kotlin patch hooks {@code ActionSheetsKt.showFilmActionSheet(fragment, filmSummary)}.
- * When that method runs — i.e. the user long-pressed a poster, or tapped the … menu — we get
- * first crack at it. We read the film's slug and IMDb id (via reflection on FilmSummary), then
- * show our own {@link CustomPosterDialog} instead of the sheet. Users who want the original
- * sheet (e.g. real Patrons using Change poster / backdrop) can still reach it — see below.
+ * That method runs every time the user long-presses a poster in a list or taps the 3-dot menu
+ * on a film page. We get called first — fire-and-forget — and if the setup makes sense, we
+ * show our {@link CustomPosterDialog}. The original method then continues and paints the app's
+ * own sheet underneath.
  *
- * <p>If the user's preference is "show both", we also fall through and let the original sheet
- * open after ours has closed. Default is our dialog only, because the sheet is mostly useful
- * only to Patrons.
+ * <p>Everything is wrapped in try/catch. A failure inside this class never breaks the app's
+ * normal action sheet — that's why the Kotlin hook uses no labels and no early return.
  */
 public final class CustomPosterButton {
+
+    private static final Pattern IMDB = Pattern.compile("(tt\\d+)");
 
     private CustomPosterButton() {}
 
     /**
-     * Called from the hooked action-sheet method. Returns true if we handled the click and the
-     * caller should return early, false if the caller should proceed to the original sheet.
+     * Fire-and-forget entry point. Called from the injected hook before the app's own action
+     * sheet renders. Shows the custom-poster dialog if we can resolve a film slug; otherwise
+     * returns silently and the app's sheet appears unchanged.
      */
-    public static boolean maybeIntercept(Fragment fragment, Object filmSummary) {
+    public static void offerDialog(Fragment fragment, Object filmSummary) {
         try {
-            if (fragment == null || filmSummary == null) return false;
+            if (fragment == null || filmSummary == null) return;
 
-            Prefs.load(fragment.requireContext());
-            if (!Prefs.has(Prefs.KEY_CUSTOM_POSTERS) && !TmdbClient.isConfigured()
-                    && !Prefs.getBoolean(Prefs.KEY_OPEN_IN_PLAYER, false)) {
-                // The patch is enabled (otherwise we wouldn't be here), but the user has
-                // neither a TMDB key nor a custom poster yet. Still show our dialog — that's
-                // how they'll set their first override.
+            final Context ctx;
+            try {
+                ctx = fragment.requireContext();
+            } catch (Throwable t) {
+                return;
             }
+            if (ctx == null) return;
+
+            Prefs.load(ctx);
 
             String slug = reflectString(filmSummary, "getId");
-            String imdbId = reflectImdbId(filmSummary);
-            if (slug == null || slug.isEmpty()) {
-                // No id — let the app show its own sheet, since we can't key the override.
-                return false;
-            }
+            if (slug == null || slug.isEmpty()) return;
 
-            final Context ctx = fragment.requireContext();
             final String filmSlug = slug;
-            final String filmImdb = imdbId;
+            final String imdbId = reflectImdbId(filmSummary);
 
-            CustomPosterDialog dialog = new CustomPosterDialog(ctx, filmSlug, filmImdb,
+            CustomPosterDialog dialog = new CustomPosterDialog(ctx, filmSlug, imdbId,
                     new CustomPosterDialog.OnChange() {
                         @Override public void onChange(String newUrl) {
-                            // Nothing to do — PosterView will pick up the change on next render.
-                            // If the user is currently viewing the film, they can pull-to-refresh
-                            // or navigate away and back to see it.
+                            // Poster redraws on next render.
                         }
                     });
             dialog.show();
-            return true;
-        } catch (Throwable t) {
-            return false;
+        } catch (Throwable ignored) {
+            // Never let our code crash the action sheet.
         }
     }
 
@@ -84,8 +81,8 @@ public final class CustomPosterButton {
         try {
             Method getLinks = filmSummary.getClass().getMethod("getLinks");
             Object linksObj = getLinks.invoke(filmSummary);
-            if (!(linksObj instanceof java.util.List)) return null;
-            for (Object link : (java.util.List<?>) linksObj) {
+            if (!(linksObj instanceof List)) return null;
+            for (Object link : (List<?>) linksObj) {
                 Method getType = link.getClass().getMethod("getType");
                 Object type = getType.invoke(link);
                 if (type == null) continue;
@@ -93,8 +90,7 @@ public final class CustomPosterButton {
                 Method getUrl = link.getClass().getMethod("getUrl");
                 Object url = getUrl.invoke(link);
                 if (url == null) continue;
-                java.util.regex.Matcher m =
-                        java.util.regex.Pattern.compile("(tt\\d+)").matcher(url.toString());
+                Matcher m = IMDB.matcher(url.toString());
                 if (m.find()) return m.group(1);
             }
         } catch (Throwable ignored) {

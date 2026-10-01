@@ -72,10 +72,8 @@ final class ModSettingsView extends ScrollView {
                 ViewGroup.LayoutParams.WRAP_CONTENT));
 
         boolean themeAvailable = ModTheme.isSupported();
-
         boolean materialYouActive = ctx.getResources().getIdentifier(
                 "morphe_my_surface", "color", ctx.getPackageName()) != 0;
-
         boolean bakedThemeActive = ctx.getResources().getIdentifier(
                 "morphe_baked_theme", "color", ctx.getPackageName()) != 0;
 
@@ -213,12 +211,13 @@ final class ModSettingsView extends ScrollView {
             }
         });
 
-        // --- Custom poster ---
-        header("Custom poster");
+        // --- Custom poster / backdrop ---------------------------------
+        header("Custom images");
+
         column.addView(choiceRow("TMDB API key",
                 Prefs.hasTmdbKey()
                         ? "Configured — tap to change"
-                        : "Set a free key from themoviedb.org so the picker can show posters",
+                        : "Set a free key from themoviedb.org so the picker can show options",
                 Prefs.hasTmdbKey() ? "Edit" : "Set",
                 new Runnable() {
                     @Override public void run() {
@@ -230,15 +229,35 @@ final class ModSettingsView extends ScrollView {
                         }).show();
                     }
                 }));
-        column.addView(actionRow("Clear all custom posters",
-                CustomPosterStore.size() == 0
-                        ? "No custom posters set"
-                        : (CustomPosterStore.size() + " film" + (CustomPosterStore.size() == 1 ? "" : "s") + " customised — tap to reset"),
+
+        int posterCount = CustomPosterStore.size();
+        int backdropCount = CustomPosterStore.backdropSize();
+        boolean hasProfileBackdrop = !Prefs.getString(Prefs.KEY_PROFILE_BACKDROP, "").isEmpty();
+        int totalCustom = posterCount + backdropCount + (hasProfileBackdrop ? 1 : 0);
+
+        column.addView(actionRow("Clear all custom images",
+                totalCustom == 0
+                        ? "Nothing set"
+                        : (totalCustom + " image" + (totalCustom == 1 ? "" : "s") + " customised — tap to reset"),
                 new Runnable() {
                     @Override public void run() {
-                        if (CustomPosterStore.size() == 0) return;
-                        CustomPosterStore.replaceAll(null);
-                        rebuildAndRestart();
+                        if (totalCustom == 0) return;
+                        ModDialog.show(ctx,
+                                "Clear all custom images?",
+                                "This removes every custom poster, film backdrop, and profile " +
+                                        "backdrop you've set. The originals will return on next " +
+                                        "visit. Your other settings are untouched.",
+                                "Clear all",
+                                "Cancel",
+                                new Runnable() {
+                                    @Override public void run() {
+                                        CustomPosterStore.replaceAll(null);
+                                        CustomPosterStore.replaceAllBackdrops(null);
+                                        Prefs.putString(Prefs.KEY_PROFILE_BACKDROP, "");
+                                        rebuildAndRestart();
+                                    }
+                                },
+                                null);
                     }
                 }));
 

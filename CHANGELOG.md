@@ -1,3 +1,9 @@
+## [2.11.2](https://github.com/kim20598/Test-cloudstream1/compare/v2.11.1...v2.11.2) (2026-10-01)
+
+### 🐛 Bug Fixes
+
+* make custom poster entry point fire-and-forget to prevent crash ([52e989f](https://github.com/kim20598/Test-cloudstream1/commit/52e989f6953bbe322c7be2eb24292639c5e0d9be))
+
 ## [2.11.1](https://github.com/kim20598/Test-cloudstream1/compare/v2.11.0...v2.11.1) (2026-10-01)
 
 ### 🐛 Bug Fixes

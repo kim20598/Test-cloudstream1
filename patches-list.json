@@ -1,6 +1,6 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "2.11.1",
+  "version": "2.11.2",
   "patches": [
     {
       "name": "Appearance",
@@ -59,7 +59,7 @@
     },
     {
       "name": "Custom poster (local)",
-      "description": "Adds a \"Custom poster\" item under the existing Change poster button on a film's action sheet. Pick a poster from TMDB or paste any image URL, and it will be used on your device for that film — saved locally and included in Mod settings export/import. Works on every film regardless of Patron tier.",
+      "description": "Adds a \"Custom poster\" option on a film's action sheet. Pick a poster from TMDB or paste any image URL, and it will be used on your device for that film — saved locally and included in Mod settings export/import. Works on every film regardless of Patron tier.",
       "default": false,
       "dependencies": [],
       "compatiblePackages": [

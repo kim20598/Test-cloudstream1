@@ -169,7 +169,7 @@ about your APK doesn't match.
 ## Patches
 
 <!-- PATCHES_START EXPANDED -->
-> **[v2.11.1](https://github.com/kim20598/Test-cloudstream1/releases/tag/v2.11.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;9 patches total
+> **[v2.11.2](https://github.com/kim20598/Test-cloudstream1/releases/tag/v2.11.2)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;9 patches total
 <details open>
 <summary>Letterboxd&nbsp;&nbsp;•&nbsp;&nbsp;9 patches</summary>
 <br>
@@ -178,7 +178,7 @@ about your APK doesn't match.
 |----------|----------------|-----------|
 | [Appearance](#appearance) | In-app appearance controls, adjustable from the Letterboxd Mods screen without re-patching: a dark surface theme (Pure Black / Purple / Midnight Blue), a custom accent colour (presets or any hex), and the bottom-navigation selected style. Applied at runtime via resource overlays on Android 12 and later. Needs the "Mod settings" patch. If the separate "Material You theme" patch is also applied, its OLED and nav-bar-match switches are disabled here automatically — the two theming systems can't run at once. |  |
 | [Brighter Watched-by stars](#brighter-watched-by-stars) | Other people's star ratings in a film's "Watched by" row use a very dark grey (#445566) that is hard to read, especially on a black theme. This switches them to the lighter grey (#99AABB) the rest of the app already uses for other people's ratings. A small legibility fix, on by default. |  |
-| [Custom poster (local)](#custom-poster-local) | Adds a "Custom poster" item under the existing Change poster button on a film's action sheet. Pick a poster from TMDB or paste any image URL, and it will be used on your device for that film — saved locally and included in Mod settings export/import. Works on every film regardless of Patron tier. |  |
+| [Custom poster (local)](#custom-poster-local) | Adds a "Custom poster" option on a film's action sheet. Pick a poster from TMDB or paste any image URL, and it will be used on your device for that film — saved locally and included in Mod settings export/import. Works on every film regardless of Patron tier. |  |
 | [Denser poster grid](#denser-poster-grid) | Tightens the spacing around posters in grids so they render larger and closer together. Does not change the number of columns. | • Grid density |
 | [Force Patron (local)](#force-patron-local) | Makes the app treat your own account as Patron locally, so Patron-only screens and pickers appear. Purely cosmetic — the server still knows the real tier, so anything that saves (posters, backdrops) or fetches Patron-only data will not actually work. Off by default. |  |
 | [Hide ads](#hide-ads) | Stops the Google AdMob banners shown to free accounts from loading anywhere in the app. On by default. |  |

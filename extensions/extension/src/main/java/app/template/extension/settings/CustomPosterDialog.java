@@ -2,7 +2,6 @@ package app.template.extension.settings;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Handler;
@@ -27,15 +26,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * "Custom poster" picker — shown from the action sheet's "Custom poster" row.
- *
- * <p>Layout: header with title + reset button; a grid of poster thumbnails fetched from TMDB
- * (by the film's IMDb id); a paste-URL input at the bottom for anything TMDB doesn't have.
- *
- * <p>When the user picks a poster (either from the grid or via the URL field), the picker
- * saves the override AND immediately asks {@link CustomPosterButton#refreshVisiblePoster} to
- * reload every visible {@code PosterView} for this film. That's what makes the swap instant —
- * no fragment reload, no waiting.
+ * Picker dialog for custom posters or film backdrops. Mode is {@code "poster"} or
+ * {@code "backdrop"}. Same UI in both — TMDB grid + paste-URL — but different TMDB endpoint
+ * and different storage.
  */
 final class CustomPosterDialog extends Dialog {
 
@@ -44,6 +37,7 @@ final class CustomPosterDialog extends Dialog {
     private final Context ctx;
     private final String filmSlug;
     private final String imdbId;
+    private final String mode;  // "poster" | "backdrop"
     private final OnChange onChange;
     private final float density;
     private final ExecutorService exec = Executors.newSingleThreadExecutor();
@@ -54,17 +48,22 @@ final class CustomPosterDialog extends Dialog {
     private TextView gridHint;
     private EditText urlInput;
 
-    CustomPosterDialog(Context context, String filmSlug, String imdbId, OnChange onChange) {
+    CustomPosterDialog(Context context, String filmSlug, String imdbId, String mode, OnChange onChange) {
         super(context);
         this.ctx = context;
         this.filmSlug = filmSlug;
         this.imdbId = imdbId;
+        this.mode = (mode == null || mode.isEmpty()) ? "poster" : mode;
         this.onChange = onChange;
         this.density = context.getResources().getDisplayMetrics().density;
         Prefs.load(context);
         build();
-        loadPosters();
+        loadImages();
     }
+
+    private boolean isBackdrop() { return "backdrop".equals(mode); }
+
+    private String label() { return isBackdrop() ? "Custom backdrop" : "Custom poster"; }
 
     private void build() {
         Window window = getWindow();
@@ -90,7 +89,7 @@ final class CustomPosterDialog extends Dialog {
         header.setGravity(Gravity.CENTER_VERTICAL);
 
         TextView title = new TextView(ctx);
-        title.setText("Custom poster");
+        title.setText(label());
         title.setTextColor(0xFFFFFFFF);
         title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 19f);
         title.setTypeface(title.getTypeface(), Typeface.BOLD);
@@ -104,17 +103,19 @@ final class CustomPosterDialog extends Dialog {
         reset.setPadding(dp(12), dp(6), dp(12), dp(6));
         reset.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
-                CustomPosterStore.clearOverride(filmSlug);
-                // Immediately clear the visible poster. The next natural render will
-                // repopulate from the server because the override is gone.
-                CustomPosterButton.refreshVisiblePoster(ctx, filmSlug, null);
+                if (isBackdrop()) {
+                    CustomPosterStore.clearBackdropOverride(filmSlug);
+                    CustomPosterButton.refreshVisibleBackdrop(ctx, filmSlug, null);
+                } else {
+                    CustomPosterStore.clearOverride(filmSlug);
+                    CustomPosterButton.refreshVisiblePoster(ctx, filmSlug, null);
+                }
                 if (onChange != null) onChange.onChange(null);
-                toast("Poster reset");
+                toast("Reset");
                 dismiss();
             }
         });
         header.addView(reset);
-
         root.addView(header);
 
         // --- grid area ---
@@ -131,7 +132,7 @@ final class CustomPosterDialog extends Dialog {
         gridWrap.addView(spinner, spinnerLp);
 
         gridHint = new TextView(ctx);
-        gridHint.setText("Loading posters…");
+        gridHint.setText("Loading…");
         gridHint.setTextColor(0xFF9AA0A6);
         gridHint.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f);
         gridHint.setGravity(Gravity.CENTER);
@@ -208,10 +209,10 @@ final class CustomPosterDialog extends Dialog {
 
     // --- TMDB fetch ------------------------------------------------------
 
-    private void loadPosters() {
+    private void loadImages() {
         if (!TmdbClient.isConfigured()) {
             spinner.setVisibility(View.GONE);
-            gridHint.setText("Add a TMDB API key in Mod settings to see poster options.\n" +
+            gridHint.setText("Add a TMDB API key in Mod settings to see options.\n" +
                     "You can still paste a URL below.");
             return;
         }
@@ -223,16 +224,17 @@ final class CustomPosterDialog extends Dialog {
 
         exec.execute(new Runnable() {
             @Override public void run() {
-                final List<String> posters = TmdbClient.fetchPosters(imdbId);
+                final List<String> urls = isBackdrop()
+                        ? TmdbClient.fetchBackdrops(imdbId)
+                        : TmdbClient.fetchPosters(imdbId);
                 main.post(new Runnable() {
                     @Override public void run() {
                         spinner.setVisibility(View.GONE);
-                        if (posters == null || posters.isEmpty()) {
-                            gridHint.setText("No posters found on TMDB for this film.\n" +
-                                    "Paste a URL below.");
+                        if (urls == null || urls.isEmpty()) {
+                            gridHint.setText("No options found on TMDB.\nPaste a URL below.");
                         } else {
                             gridHint.setVisibility(View.GONE);
-                            populateGrid(posters);
+                            populateGrid(urls);
                         }
                     }
                 });
@@ -242,10 +244,11 @@ final class CustomPosterDialog extends Dialog {
 
     private void populateGrid(List<String> urls) {
         gridContainer.removeAllViews();
-        int perRow = 3;
+        int perRow = isBackdrop() ? 2 : 3;
         int gap = dp(8);
         int available = ctx.getResources().getDisplayMetrics().widthPixels - dp(64);
-        int cellSize = (available - gap * (perRow - 1)) / perRow;
+        int cellWidth = (available - gap * (perRow - 1)) / perRow;
+        int cellHeight = isBackdrop() ? (int)(cellWidth * 0.5625) : (int)(cellWidth * 1.5);
 
         LinearLayout row = null;
         for (int i = 0; i < urls.size(); i++) {
@@ -262,8 +265,7 @@ final class CustomPosterDialog extends Dialog {
             final String url = urls.get(i);
             ImageView iv = new ImageView(ctx);
             iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    cellSize, (int) (cellSize * 1.5));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(cellWidth, cellHeight);
             lp.rightMargin = (i % perRow == perRow - 1) ? 0 : gap;
             iv.setLayoutParams(lp);
             iv.setBackgroundColor(0xFF1C1C1C);
@@ -271,9 +273,7 @@ final class CustomPosterDialog extends Dialog {
             CoilLoader.load(ctx, url, iv);
 
             iv.setOnClickListener(new View.OnClickListener() {
-                @Override public void onClick(View v) {
-                    applyUrl(url);
-                }
+                @Override public void onClick(View v) { applyUrl(url); }
             });
 
             row.addView(iv);
@@ -283,12 +283,15 @@ final class CustomPosterDialog extends Dialog {
     // --- apply -----------------------------------------------------------
 
     private void applyUrl(String url) {
-        CustomPosterStore.setOverride(filmSlug, url);
-        // Immediately swap every visible PosterView for this film. This is what makes the
-        // change instant — no leaving and returning, no fragment re-creation.
-        CustomPosterButton.refreshVisiblePoster(ctx, filmSlug, url);
+        if (isBackdrop()) {
+            CustomPosterStore.setBackdropOverride(filmSlug, url);
+            CustomPosterButton.refreshVisibleBackdrop(ctx, filmSlug, url);
+        } else {
+            CustomPosterStore.setOverride(filmSlug, url);
+            CustomPosterButton.refreshVisiblePoster(ctx, filmSlug, url);
+        }
         if (onChange != null) onChange.onChange(url);
-        toast("Poster saved");
+        toast(isBackdrop() ? "Backdrop saved" : "Poster saved");
         dismiss();
     }
 

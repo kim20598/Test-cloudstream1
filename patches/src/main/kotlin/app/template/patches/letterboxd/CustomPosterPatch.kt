@@ -5,7 +5,7 @@ import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.bytecodePatch
 import app.template.patches.shared.Constants.COMPATIBILITY_LETTERBOXD
-import com.android.smali.dexlib2.AccessFlags
+import com.android.tools.smali.dexlib2.AccessFlags
 
 private const val POSTER_VIEW =
     "Lcom/letterboxd/letterboxd/ui/views/PosterView;"

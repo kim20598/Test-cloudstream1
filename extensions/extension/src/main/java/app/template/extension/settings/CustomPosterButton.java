@@ -8,6 +8,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.lang.reflect.Field;
@@ -18,21 +19,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Runtime for the "Custom poster" feature. Three entry points:
+ * Runtime for the "Custom poster" feature. Four entry points:
  *
  * <ul>
- *   <li>{@link #maybeOverridePoster} — called from the {@code PosterView.setImage} hook every
- *       time a poster is about to render. If the user has a stored custom URL for this film,
- *       substitutes it via {@code PosterView.setImageURL}.</li>
- *   <li>{@link #injectRow} — called from {@code FilmActionsFragment.onViewCreated}. Inserts a
- *       "Custom poster" row into the action sheet, right below "Change poster / backdrop".</li>
- *   <li>{@link #refreshVisiblePoster} — called from the picker after the user chooses a poster.
- *       Walks the current activity's view tree, finds every {@code PosterView} for this film,
- *       and calls {@code setImageURL} on each with the new URL. This is what makes the swap
- *       instant — the poster updates in place, no fragment reload, no flicker.</li>
+ *   <li>{@link #maybeOverridePoster} — from {@code PosterView.setImage}. Swaps in a custom
+ *       poster URL if one is stored for the current film.</li>
+ *   <li>{@link #injectRow} — from {@code FilmActionsFragment.onViewCreated}. Adds our
+ *       "Custom poster" row to the action sheet.</li>
+ *   <li>{@link #maybeOverrideFilmBackdrop} — from {@code FilmHeaderFragment.configureBackdrop}.
+ *       Swaps in a custom film backdrop URL if one is stored.</li>
+ *   <li>{@link #refreshVisiblePoster} — from the picker after saving, refreshes every visible
+ *       PosterView for the film so the change is instant.</li>
  * </ul>
- *
- * <p>All reflection is wrapped in try/catch — an exception here would take down the host view.
  */
 public final class CustomPosterButton {
 
@@ -43,14 +41,6 @@ public final class CustomPosterButton {
 
     // --- entry point 1: poster override ---------------------------------
 
-    /**
-     * Called from the injected hook at the top of {@code PosterView.setImage}.
-     *
-     * <p>If the film shown by this view has a custom poster stored, we call
-     * {@code PosterView.setImageURL} to load it. The original {@code setImage} still runs, but
-     * our Coil load immediately supersedes the Glide load it starts. In practice the custom
-     * poster wins.
-     */
     public static void maybeOverridePoster(Object posterView) {
         try {
             if (posterView == null) return;
@@ -77,14 +67,6 @@ public final class CustomPosterButton {
 
     // --- entry point 2: row injection -----------------------------------
 
-    /**
-     * Called from the injected hook at the top of {@code FilmActionsFragment.onViewCreated}.
-     *
-     * <p>Reads the fragment's {@code binding} field, walks to {@code binding.userButtonsView}
-     * (the LinearLayout holding the action rows), finds {@code buttonChangePoster}, and inserts
-     * a new row directly below it. The new row is styled to match its neighbours and opens the
-     * picker on tap.
-     */
     public static void injectRow(Object fragment) {
         try {
             if (fragment == null) return;
@@ -100,7 +82,7 @@ public final class CustomPosterButton {
             if (!(changePosterObj instanceof View)) return;
             View reference = (View) changePosterObj;
 
-            if (container.findViewWithTag(TAG_ROW) != null) return; // already injected
+            if (container.findViewWithTag(TAG_ROW) != null) return;
 
             Context ctx = reference.getContext();
             if (ctx == null) return;
@@ -137,16 +119,57 @@ public final class CustomPosterButton {
         }
     }
 
-    // --- entry point 3: instant refresh ---------------------------------
+    // --- entry point 3: film backdrop override --------------------------
 
     /**
-     * Called from the picker right after a URL is saved. Walks the current activity's view
-     * tree, finds every {@code PosterView} whose film matches {@code filmSlug}, and asks each
-     * one to load the new URL via {@code setImageURL}.
-     *
-     * <p>Runs on the UI thread (callers are already there). The image swap is handled by Coil,
-     * which cross-fades in place — no fragment reload, no flicker.
+     * Called from the injected hook at the top of {@code FilmHeaderFragment.configureBackdrop}.
+     * Reads the film's slug from the Film argument (via getSummary), looks for a stored
+     * backdrop override, and — if found — loads it directly into the binding's
+     * {@code headerImageView} via Coil. The original method still runs, but our image wins
+     * because it loads later and Coil replaces the drawable.
      */
+    public static void maybeOverrideFilmBackdrop(Object binding, Object film) {
+        try {
+            if (binding == null || film == null) return;
+
+            String slug = extractFilmSlug(film);
+            if (slug == null || slug.isEmpty()) return;
+
+            String customUrl = CustomPosterStore.getBackdropOverride(slug);
+            if (customUrl == null || customUrl.isEmpty()) return;
+
+            Object headerImageView = readField(binding, "headerImageView");
+            if (!(headerImageView instanceof ImageView)) return;
+            ImageView iv = (ImageView) headerImageView;
+
+            CoilLoader.load(iv.getContext(), customUrl, iv);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** Best-effort slug extraction: try Film.getSummary().getId(), fall back to Film.getId(). */
+    private static String extractFilmSlug(Object film) {
+        try {
+            Method getSummary = film.getClass().getMethod("getSummary");
+            Object summary = getSummary.invoke(film);
+            if (summary != null) {
+                Method getId = summary.getClass().getMethod("getId");
+                Object id = getId.invoke(summary);
+                if (id != null) return id.toString();
+            }
+        } catch (Throwable ignored) { }
+
+        try {
+            Method getId = film.getClass().getMethod("getId");
+            Object id = getId.invoke(film);
+            if (id != null) return id.toString();
+        } catch (Throwable ignored) { }
+
+        return null;
+    }
+
+    // --- entry point 4: instant refresh ---------------------------------
+
     public static void refreshVisiblePoster(Context ctx, String filmSlug, String newUrl) {
         try {
             if (ctx == null || filmSlug == null) return;
@@ -175,15 +198,10 @@ public final class CustomPosterButton {
                         Method setImageURL = view.getClass()
                                 .getMethod("setImageURL", URL.class);
                         if (newUrl == null || newUrl.isEmpty()) {
-                            // Reset: call setImageURL(null) which clears + hides the image.
-                            // The next natural render (screen re-entry or scroll) will
-                            // re-populate from the server because our override is gone.
                             setImageURL.invoke(view, new Object[]{null});
                         } else {
                             setImageURL.invoke(view, new URL(newUrl));
                         }
-                        // Don't return — a film page can have multiple PosterViews in
-                        // different scroll containers. Refresh them all.
                     }
                 }
             }
@@ -234,8 +252,7 @@ public final class CustomPosterButton {
             CustomPosterDialog dialog = new CustomPosterDialog(ctx, slug, imdbId,
                     new CustomPosterDialog.OnChange() {
                         @Override public void onChange(String newUrl) {
-                            // No-op — the picker already triggers refreshVisiblePoster
-                            // directly, so this callback isn't needed for display.
+                            // Picker already refreshes visible views.
                         }
                     });
             dialog.show();
@@ -270,7 +287,6 @@ public final class CustomPosterButton {
         }
     }
 
-    /** Extracts the IMDb id from a FilmSummary's {@code getLinks()} list, if present. */
     private static String reflectImdbId(Object filmSummary) {
         try {
             Method getLinks = filmSummary.getClass().getMethod("getLinks");
@@ -294,7 +310,7 @@ public final class CustomPosterButton {
 
     // --- cache buster ---------------------------------------------------
 
-    public static void __cacheBustV4() {
+    public static void __cacheBustV5() {
         // intentionally empty
     }
 }

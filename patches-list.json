@@ -1,6 +1,6 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "2.9.3",
+  "version": "2.10.0",
   "patches": [
     {
       "name": "Appearance",
@@ -35,6 +35,32 @@
       "name": "Brighter Watched-by stars",
       "description": "Other people's star ratings in a film's \"Watched by\" row use a very dark grey (#445566) that is hard to read, especially on a black theme. This switches them to the lighter grey (#99AABB) the rest of the app already uses for other people's ratings. A small legibility fix, on by default.",
       "default": true,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
+          "packageName": "com.letterboxd.letterboxd",
+          "name": "Letterboxd",
+          "description": null,
+          "apkFileType": "APK",
+          "appIconColor": "#FF8000",
+          "signatures": null,
+          "targets": [
+            {
+              "version": null,
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "Custom poster (local)",
+      "description": "Adds a \"Custom poster\" item under the existing Change poster button on a film's action sheet. Pick a poster from TMDB or paste any image URL, and it will be used on your device for that film — saved locally and included in Mod settings export/import. Works on every film regardless of Patron tier.",
+      "default": false,
       "dependencies": [],
       "compatiblePackages": [
         {

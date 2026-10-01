@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-01T09:44:35",
-  "description": "## [2.9.3](https://github.com/kim20598/Test-cloudstream1/compare/v2.9.2...v2.9.3) (2026-10-01)\n\n### 🐛 Bug Fixes\n\n* fetch Patron enum from nested INSTANCE field, not outer static ([d33427a](https://github.com/kim20598/Test-cloudstream1/commit/d33427a7a3a2c19e116d10e5ee050e842c463da8))",
-  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.9.3/patches-2.9.3.mpp",
+  "created_at": "2026-10-01T10:41:03",
+  "description": "## [2.10.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.9.3...v2.10.0) (2026-10-01)\n\n### ✨ New Features\n\n* add custom poster picker with TMDB grid and URL input ([223b170](https://github.com/kim20598/Test-cloudstream1/commit/223b170047e1fbfa533b63e0fb56c5e716696605))",
+  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.10.0/patches-2.10.0.mpp",
   "signature_download_url": "",
-  "version": "2.9.3"
+  "version": "2.10.0"
 }

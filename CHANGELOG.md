@@ -1,3 +1,9 @@
+## [2.10.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.9.3...v2.10.0) (2026-10-01)
+
+### ✨ New Features
+
+* add custom poster picker with TMDB grid and URL input ([223b170](https://github.com/kim20598/Test-cloudstream1/commit/223b170047e1fbfa533b63e0fb56c5e716696605))
+
 ## [2.9.3](https://github.com/kim20598/Test-cloudstream1/compare/v2.9.2...v2.9.3) (2026-10-01)
 
 ### 🐛 Bug Fixes

@@ -1,3 +1,9 @@
+## [2.9.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.8.2...v2.9.0) (2026-10-01)
+
+### ✨ New Features
+
+* add CloudStream support ([4f788d4](https://github.com/kim20598/Test-cloudstream1/commit/4f788d4c0c66cb35fb1e8d5bb1cc872bb97646a4))
+
 ## [2.8.2](https://github.com/kim20598/Test-cloudstream1/compare/v2.8.1...v2.8.2) (2026-10-01)
 
 ### 🐛 Bug Fixes

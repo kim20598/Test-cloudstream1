@@ -1,3 +1,9 @@
+## [2.14.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.13.0...v2.14.0) (2026-10-01)
+
+### ✨ New Features
+
+* add film backdrop override storage and hook ([2a1ba46](https://github.com/kim20598/Test-cloudstream1/commit/2a1ba46828f57a0ec6705c79097c81ab61cea3fa))
+
 ## [2.13.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.12.1...v2.13.0) (2026-10-01)
 
 ### ✨ New Features

@@ -1,6 +1,6 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "2.13.0",
+  "version": "2.14.0",
   "patches": [
     {
       "name": "Appearance",
@@ -59,7 +59,7 @@
     },
     {
       "name": "Custom poster (local)",
-      "description": "Adds a \"Custom poster\" row under the existing Change poster button on a film's action sheet, plus unlocks all Pro app icons (which are a local toggle). Pick a poster from TMDB or paste any image URL — saved locally and included in Mod settings export/import. Works on every film regardless of Patron tier.",
+      "description": "Adds a \"Custom poster\" row under the existing Change poster button on a film's action sheet, swaps in a custom film backdrop if you've set one, plus unlocks all Pro app icons (which are a local toggle). Pick a poster or backdrop from TMDB or paste any image URL — saved locally and included in Mod settings export/import.",
       "default": false,
       "dependencies": [],
       "compatiblePackages": [

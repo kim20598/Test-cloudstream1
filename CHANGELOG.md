@@ -1,3 +1,9 @@
+## [2.11.6](https://github.com/kim20598/Test-cloudstream1/compare/v2.11.5...v2.11.6) (2026-10-01)
+
+### 🐛 Bug Fixes
+
+* match offerDialog descriptor to runtime signature ([0da4078](https://github.com/kim20598/Test-cloudstream1/commit/0da40788a372b3eb3ed0d9ab9879e10fc3e1156d))
+
 ## [2.11.5](https://github.com/kim20598/Test-cloudstream1/compare/v2.11.4...v2.11.5) (2026-10-01)
 
 ### 🐛 Bug Fixes

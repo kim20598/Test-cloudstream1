@@ -1,3 +1,9 @@
+## [2.11.4](https://github.com/kim20598/Test-cloudstream1/compare/v2.11.3...v2.11.4) (2026-10-01)
+
+### 🐛 Bug Fixes
+
+* add missing maybeOverridePoster method to CustomPosterButton ([43f9365](https://github.com/kim20598/Test-cloudstream1/commit/43f9365b78c4c44c74b6399065da10637a3fc144))
+
 ## [2.11.3](https://github.com/kim20598/Test-cloudstream1/compare/v2.11.2...v2.11.3) (2026-10-01)
 
 ### 🐛 Bug Fixes

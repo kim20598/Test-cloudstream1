@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-01T11:49:29",
-  "description": "## [2.11.3](https://github.com/kim20598/Test-cloudstream1/compare/v2.11.2...v2.11.3) (2026-10-01)\n\n### 🐛 Bug Fixes\n\n* use v-register numbers in injected hooks instead of p aliases ([de84fe7](https://github.com/kim20598/Test-cloudstream1/commit/de84fe76c942291cfa0f12129167cd3975c007b2))",
-  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.11.3/patches-2.11.3.mpp",
+  "created_at": "2026-10-01T12:25:32",
+  "description": "## [2.11.4](https://github.com/kim20598/Test-cloudstream1/compare/v2.11.3...v2.11.4) (2026-10-01)\n\n### 🐛 Bug Fixes\n\n* add missing maybeOverridePoster method to CustomPosterButton ([43f9365](https://github.com/kim20598/Test-cloudstream1/commit/43f9365b78c4c44c74b6399065da10637a3fc144))",
+  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.11.4/patches-2.11.4.mpp",
   "signature_download_url": "",
-  "version": "2.11.3"
+  "version": "2.11.4"
 }

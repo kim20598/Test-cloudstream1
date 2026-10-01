@@ -1,3 +1,13 @@
+## [2.16.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.15.2...v2.16.0) (2026-10-01)
+
+### 🐛 Bug Fixes
+
+* drop confirmation dialog on clear; inline reset for all three stores ([b7af4bf](https://github.com/kim20598/Test-cloudstream1/commit/b7af4bfcce3dba31e59911191209568d5b26ba23))
+
+### ✨ New Features
+
+* instant poster override, confirm dialog on clear, profile backdrop export ([2af46fd](https://github.com/kim20598/Test-cloudstream1/commit/2af46fd4adad8f65319d4e1af4a17e4f3a81bbf4))
+
 ## [2.15.2](https://github.com/kim20598/Test-cloudstream1/compare/v2.15.1...v2.15.2) (2026-10-01)
 
 ### 🐛 Bug Fixes

@@ -1,3 +1,14 @@
+## [2.11.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.10.0...v2.11.0) (2026-10-01)
+
+### 🐛 Bug Fixes
+
+* remove custom poster confirmation dialog to fix build ([4c67004](https://github.com/kim20598/Test-cloudstream1/commit/4c6700429a9374d7b55d3c601aaf43cba57fb118))
+
+### ✨ New Features
+
+* add custom poster picker with TMDB grid, URL input, and config export ([de55ca2](https://github.com/kim20598/Test-cloudstream1/commit/de55ca2a348bbfddc0d0290eb3345c5b016a5290))
+* add custom poster picker with TMDB grid, URL input, and config export ([4ba404f](https://github.com/kim20598/Test-cloudstream1/commit/4ba404fd44f4fcb1a3bd284f78f2c8c75c87e7cb))
+
 ## [2.10.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.9.3...v2.10.0) (2026-10-01)
 
 ### ✨ New Features

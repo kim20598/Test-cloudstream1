@@ -1,3 +1,10 @@
+## [2.16.1](https://github.com/kim20598/Test-cloudstream1/compare/v2.16.0...v2.16.1) (2026-10-01)
+
+### 🐛 Bug Fixes
+
+* correct ModDialog.show argument order on clear confirmation ([20f2504](https://github.com/kim20598/Test-cloudstream1/commit/20f2504c568a8aa69e35f9875fb9a1da719c694e))
+* remove duplicate ModSettingsView; restore ModDialog ([d00b9bc](https://github.com/kim20598/Test-cloudstream1/commit/d00b9bc8bfa0a277212cc42e2f460bdfb661eda5))
+
 ## [2.16.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.15.2...v2.16.0) (2026-10-01)
 
 ### 🐛 Bug Fixes

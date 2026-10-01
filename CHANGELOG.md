@@ -1,3 +1,9 @@
+## [2.11.1](https://github.com/kim20598/Test-cloudstream1/compare/v2.11.0...v2.11.1) (2026-10-01)
+
+### 🐛 Bug Fixes
+
+* guard colors.xml access in baked theme patch to avoid crash on versions without it ([c297586](https://github.com/kim20598/Test-cloudstream1/commit/c297586d583ea688bd8a95745912a2a929ab381c))
+
 ## [2.11.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.10.0...v2.11.0) (2026-10-01)
 
 ### 🐛 Bug Fixes

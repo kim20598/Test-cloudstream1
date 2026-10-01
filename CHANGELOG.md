@@ -1,3 +1,9 @@
+## [2.9.1](https://github.com/kim20598/Test-cloudstream1/compare/v2.9.0...v2.9.1) (2026-10-01)
+
+### 🐛 Bug Fixes
+
+* hook setMemberStatus instead of getter to keep serialization consistent ([7be8ba0](https://github.com/kim20598/Test-cloudstream1/commit/7be8ba087fac50c9c55bfb3cd7bb62671d921d17))
+
 ## [2.9.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.8.2...v2.9.0) (2026-10-01)
 
 ### ✨ New Features

@@ -45,7 +45,7 @@ val customPosterPatch = bytecodePatch(
     compatibleWith(COMPATIBILITY_LETTERBOXD)
 
     execute {
-        // PosterView.setImage(Image, int, Function0) — .registers 6, 3 params, so p0 = v3.
+        // PosterView.setImage(Image, int, Function0) — .registers 6, 3 params, p0 = v3.
         PosterViewSetImageFingerprint.method.apply {
             addInstruction(
                 0,
@@ -54,11 +54,13 @@ val customPosterPatch = bytecodePatch(
         }
 
         // ActionSheetsKt.showFilmActionSheet(Fragment, FilmSummary) — .registers 9,
-        // 2 params, so p0 = v7 and p1 = v8.
+        // 2 params, p0 = v7, p1 = v8. Note the runtime method's second parameter is
+        // declared as Object, so we must call it with that descriptor — Dalvik resolves
+        // by exact descriptor, not by assignability.
         ShowFilmActionSheetFingerprint.method.apply {
             addInstruction(
                 0,
-                "invoke-static {v7, v8}, Lapp/template/extension/settings/CustomPosterButton;->offerDialog(Landroidx/fragment/app/Fragment;Lcom/letterboxd/api/model/FilmSummary;)V",
+                "invoke-static {v7, v8}, Lapp/template/extension/settings/CustomPosterButton;->offerDialog(Landroidx/fragment/app/Fragment;Ljava/lang/Object;)V",
             )
         }
     }

@@ -13,8 +13,8 @@ import app.template.patches.shared.Constants.COMPATIBILITY_LETTERBOXD
  * see a non-Patron account.
  */
 private val memberGetMemberStatusFingerprint = Fingerprint(
+    name = "getMemberStatus",
     returnType = "Lcom/letterboxd/api/model/MemberStatus;",
-    strings = listOf("getMemberStatus"),
 )
 
 @Suppress("unused")
@@ -30,8 +30,6 @@ val unlockPatronPatch = bytecodePatch(
 
     execute {
         memberGetMemberStatusFingerprint.method.apply {
-            // Replace the first instruction (iget-object) with sget-object fetching the Patron
-            // constant. The trailing `return-object v0` is left in place.
             replaceInstruction(
                 0,
                 "sget-object v0, Lcom/letterboxd/api/model/MemberStatus;->Patron:Lcom/letterboxd/api/model/MemberStatus;",

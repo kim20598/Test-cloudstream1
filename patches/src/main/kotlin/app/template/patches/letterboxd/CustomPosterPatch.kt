@@ -22,10 +22,6 @@ private const val MEMBER =
 private const val SETTINGS_APP_ICON_FRAGMENT =
     "Lcom/letterboxd/letterboxd/ui/fragments/user/SettingsAppIconFragment;"
 
-/**
- * `FilmActionsFragment.onViewCreated` — injects the three rows (poster / backdrop / profile
- * backdrop) into the film action sheet.
- */
 internal object FilmActionsOnViewCreatedFingerprint : Fingerprint(
     definingClass = FILM_ACTIONS_FRAGMENT,
     name = "onViewCreated",
@@ -34,11 +30,6 @@ internal object FilmActionsOnViewCreatedFingerprint : Fingerprint(
     parameters = listOf("Landroid/view/View;", "Landroid/os/Bundle;"),
 )
 
-/**
- * `FilmHeaderFragment.configureBackdrop(binding, film)` — runs when the film page renders
- * its header image. We prepend a hook that, if a custom backdrop exists, posts a Coil load
- * to the header ImageView after the original Glide load — instant replacement, no flicker.
- */
 internal object FilmHeaderConfigureBackdropFingerprint : Fingerprint(
     definingClass = FILM_HEADER_FRAGMENT,
     name = "configureBackdrop",
@@ -47,11 +38,6 @@ internal object FilmHeaderConfigureBackdropFingerprint : Fingerprint(
     parameters = listOf(FRAGMENT_FILM_HEADER_BINDING, FILM),
 )
 
-/**
- * `MemberHeaderFragment.applyMember(Member)` — runs on profile data load. Same pattern as
- * film backdrop: post a Coil load to the userBackdrop ImageView after the original Glide
- * load completes.
- */
 internal object MemberHeaderApplyMemberFingerprint : Fingerprint(
     definingClass = MEMBER_HEADER_FRAGMENT,
     name = "applyMember",
@@ -60,10 +46,6 @@ internal object MemberHeaderApplyMemberFingerprint : Fingerprint(
     parameters = listOf(MEMBER),
 )
 
-/**
- * `SettingsAppIconFragment.getCanChangeAppIcon()` — force to true so Pro app icons are
- * pickable. The icon swap is a purely local manifest toggle.
- */
 internal object SettingsAppIconCanChangeFingerprint : Fingerprint(
     definingClass = SETTINGS_APP_ICON_FRAGMENT,
     name = "getCanChangeAppIcon",
@@ -84,7 +66,6 @@ val customPosterPatch = bytecodePatch(
     compatibleWith(COMPATIBILITY_LETTERBOXD)
 
     execute {
-        // 1. Inject the three rows into the film action sheet.
         FilmActionsOnViewCreatedFingerprint.method.apply {
             addInstruction(
                 0,
@@ -92,8 +73,6 @@ val customPosterPatch = bytecodePatch(
             )
         }
 
-        // 2. Film backdrop override — FilmHeaderFragment.configureBackdrop(binding, film).
-        //    .registers 9, 3 params → p0 = v6, p1 = v7, p2 = v8.
         FilmHeaderConfigureBackdropFingerprint.method.apply {
             addInstruction(
                 0,
@@ -101,8 +80,6 @@ val customPosterPatch = bytecodePatch(
             )
         }
 
-        // 3. Profile backdrop override — MemberHeaderFragment.applyMember(Member).
-        //    Prepend with p0 = the fragment.
         MemberHeaderApplyMemberFingerprint.method.apply {
             addInstruction(
                 0,
@@ -110,7 +87,6 @@ val customPosterPatch = bytecodePatch(
             )
         }
 
-        // 4. App icon unlock — force getCanChangeAppIcon() to return true.
         SettingsAppIconCanChangeFingerprint.method.apply {
             addInstructions(
                 0,

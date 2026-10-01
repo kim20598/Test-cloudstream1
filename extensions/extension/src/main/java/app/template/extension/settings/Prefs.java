@@ -18,21 +18,21 @@ public final class Prefs {
 
     // "Hide ratings until watched"
     public static final String KEY_HIDE_RATINGS_ENABLED = "hide_ratings_enabled";
-    public static final String KEY_HIDE_RATINGS_STYLE = "hide_ratings_style"; // cover: panel|link|shimmer|burst
-    public static final String KEY_HIDE_RATINGS_ANIMATION = "hide_ratings_animation"; // default|crumble|confetti
-    public static final String KEY_HIDE_RATINGS_CONFETTI_COLOR = "hide_ratings_confetti_color"; // accent|letterboxd
+    public static final String KEY_HIDE_RATINGS_STYLE = "hide_ratings_style";
+    public static final String KEY_HIDE_RATINGS_ANIMATION = "hide_ratings_animation";
+    public static final String KEY_HIDE_RATINGS_CONFETTI_COLOR = "hide_ratings_confetti_color";
     public static final String KEY_HIDE_RATINGS_HAPTIC = "hide_ratings_haptic";
 
-    // "Hide Video Store on home" — bundled into "Mod settings" itself, not its own patch.
+    // "Hide Video Store on home"
     public static final String KEY_HIDE_VIDEO_STORE = "hide_video_store";
 
-    // "Home tabs" — CSV of visible home section keys in order (films,reviews,lists,journal).
+    // "Home tabs"
     public static final String KEY_HOME_TABS = "home_tabs";
 
     // "Hide Where to Watch"
     public static final String KEY_HIDE_WHERE_TO_WATCH = "hide_where_to_watch";
 
-    // "Runtime as 1h 47m" on the film page
+    // "Runtime as 1h 47m"
     public static final String KEY_RUNTIME_HHMM = "runtime_hhmm";
 
     // "Open in player"
@@ -42,18 +42,24 @@ public final class Prefs {
     // "Match bottom nav to top bar color"
     public static final String KEY_MATCH_BOTTOM_NAV = "match_bottom_nav";
 
-    // Bottom nav selected style: stock | nopill | white | accent | accentPill
+    // Bottom nav selected style
     public static final String KEY_NAV_INDICATOR = "nav_indicator";
 
-    // "Bottom navigation" — which destinations to show (CSV of nav item keys) and which to open on.
+    // "Bottom navigation"
     public static final String KEY_NAV_ITEMS = "nav_items";
-    public static final String KEY_LAUNCH_TAB = "launch_tab"; // last | popular | search | activity | watchlist | profile
+    public static final String KEY_LAUNCH_TAB = "launch_tab";
 
     // "Mod theme"
     public static final String KEY_THEME_SURFACE = "theme_surface"; // stock | oled | purple | midnight
-    public static final String KEY_THEME_OLED = "theme_oled";       // legacy boolean mirror of the above
+    public static final String KEY_THEME_OLED = "theme_oled";       // legacy boolean mirror
     public static final String KEY_THEME_ACCENT = "theme_accent";
     public static final String KEY_THEME_ACCENT_HEX = "theme_accent_hex";
+
+    // "Custom poster (local)" — JSON map of filmSlug -> posterUrl
+    public static final String KEY_CUSTOM_POSTERS = "custom_posters";
+
+    // TMDB API key for the poster picker (user-supplied, free from themoviedb.org)
+    public static final String KEY_TMDB_API_KEY = "tmdb_api_key";
 
     /**
      * Resolves the surface style: {@code stock}, {@code oled}, {@code purple}, or {@code midnight}.
@@ -82,7 +88,6 @@ public final class Prefs {
         }
     }
 
-    /** True only if the store loaded and the user has explicitly set this key. */
     public static boolean has(String key) {
         try {
             return sp != null && sp.contains(key);
@@ -123,38 +128,49 @@ public final class Prefs {
         }
     }
 
-    /** Whether the "Video Store on home" row should be hidden. Off by default. */
     public static boolean hideVideoStore() {
         return getBoolean(KEY_HIDE_VIDEO_STORE, false);
     }
 
-    /** Whether the film page's "Where to watch" section should be hidden. Off by default. */
     public static boolean hideWhereToWatch() {
         return getBoolean(KEY_HIDE_WHERE_TO_WATCH, false);
     }
 
-    /** Whether the "Open in player" button should be shown. Off by default. */
     public static boolean openInPlayer() {
         return getBoolean(KEY_OPEN_IN_PLAYER, false);
     }
 
-    /** Which app the "Open in player" button targets ({@code stremio}, {@code nuvio}, or {@code cloudstream}). */
     public static String streamingApp() {
         return getString(KEY_STREAMING_APP, "stremio");
     }
 
-    /** Tap-to-reveal transition ({@code default}, {@code crumble} or {@code confetti}). */
     public static String revealAnimation() {
         return getString(KEY_HIDE_RATINGS_ANIMATION, "confetti");
     }
 
-    /** Confetti's palette source ({@code accent}, {@code letterboxd} or {@code red}). */
     public static String confettiColor() {
         return getString(KEY_HIDE_RATINGS_CONFETTI_COLOR, "letterboxd");
     }
 
-    /** Whether a short vibration plays when the rating is revealed. On by default. */
     public static boolean hapticOnReveal() {
         return getBoolean(KEY_HIDE_RATINGS_HAPTIC, true);
+    }
+
+    // --- Custom poster (local) ------------------------------------------
+
+    /** True if the user has configured a TMDB API key for the custom-poster picker. */
+    public static boolean hasTmdbKey() {
+        String k = getString(KEY_TMDB_API_KEY, "");
+        return k != null && !k.trim().isEmpty();
+    }
+
+    /** The user's TMDB API key, or empty string. */
+    public static String tmdbKey() {
+        return getString(KEY_TMDB_API_KEY, "");
+    }
+
+    /** Stores the user's TMDB API key. Empty clears it. */
+    public static void setTmdbKey(String key) {
+        putString(KEY_TMDB_API_KEY, key == null ? "" : key.trim());
     }
 }

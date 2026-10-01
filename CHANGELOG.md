@@ -1,3 +1,9 @@
+## [2.12.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.11.6...v2.12.0) (2026-10-01)
+
+### ✨ New Features
+
+* inject custom poster row natively into film action sheet ([c84e251](https://github.com/kim20598/Test-cloudstream1/commit/c84e2512302761e836b2885749a9f61302204cc2))
+
 ## [2.11.6](https://github.com/kim20598/Test-cloudstream1/compare/v2.11.5...v2.11.6) (2026-10-01)
 
 ### 🐛 Bug Fixes

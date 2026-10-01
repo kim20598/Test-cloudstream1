@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-01T13:11:06",
-  "description": "## [2.11.6](https://github.com/kim20598/Test-cloudstream1/compare/v2.11.5...v2.11.6) (2026-10-01)\n\n### 🐛 Bug Fixes\n\n* match offerDialog descriptor to runtime signature ([0da4078](https://github.com/kim20598/Test-cloudstream1/commit/0da40788a372b3eb3ed0d9ab9879e10fc3e1156d))",
-  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.11.6/patches-2.11.6.mpp",
+  "created_at": "2026-10-01T13:57:30",
+  "description": "## [2.12.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.11.6...v2.12.0) (2026-10-01)\n\n### ✨ New Features\n\n* inject custom poster row natively into film action sheet ([c84e251](https://github.com/kim20598/Test-cloudstream1/commit/c84e2512302761e836b2885749a9f61302204cc2))",
+  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.12.0/patches-2.12.0.mpp",
   "signature_download_url": "",
-  "version": "2.11.6"
+  "version": "2.12.0"
 }

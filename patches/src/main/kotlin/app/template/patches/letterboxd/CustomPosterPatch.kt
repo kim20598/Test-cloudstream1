@@ -13,13 +13,15 @@ private const val IMAGE =
     "Lcom/letterboxd/api/model/Image;"
 private const val FILM_ACTIONS_FRAGMENT =
     "Lcom/letterboxd/letterboxd/ui/fragments/film/FilmActionsFragment;"
+private const val FILM_HEADER_FRAGMENT =
+    "Lcom/letterboxd/letterboxd/ui/fragments/film/FilmHeaderFragment;"
+private const val FILM =
+    "Lcom/letterboxd/api/model/Film;"
+private const val FRAGMENT_FILM_HEADER_BINDING =
+    "Lcom/letterboxd/letterboxd/databinding/FragmentFilmHeaderBinding;"
 private const val SETTINGS_APP_ICON_FRAGMENT =
     "Lcom/letterboxd/letterboxd/ui/fragments/user/SettingsAppIconFragment;"
 
-/**
- * `PosterView.setImage(Image, int, Function0)` — poster rendering. Prepends a check for a
- * stored custom poster URL, loads it via setImageURL if present.
- */
 internal object PosterViewSetImageFingerprint : Fingerprint(
     definingClass = POSTER_VIEW,
     name = "setImage",
@@ -28,30 +30,27 @@ internal object PosterViewSetImageFingerprint : Fingerprint(
     parameters = listOf(IMAGE, "I", "Lkotlin/jvm/functions/Function0;"),
 )
 
-/**
- * `FilmActionsFragment.onViewCreated(View, Bundle)` — runs once when the sheet is created.
- * We prepend a call that injects our "Custom poster" row into the action list, right under
- * "Change poster / backdrop".
- */
 internal object FilmActionsOnViewCreatedFingerprint : Fingerprint(
     definingClass = FILM_ACTIONS_FRAGMENT,
     name = "onViewCreated",
     accessFlags = listOf(AccessFlags.PUBLIC),
     returnType = "V",
-    parameters = listOf(
-        "Landroid/view/View;",
-        "Landroid/os/Bundle;",
-    ),
+    parameters = listOf("Landroid/view/View;", "Landroid/os/Bundle;"),
 )
 
 /**
- * `SettingsAppIconFragment.getCanChangeAppIcon()` — private, returns whether the user is
- * allowed to pick a Pro-exclusive app icon. The click handler in the same class checks this
- * and, when false, routes Pro icons to the Upgrade screen instead of the confirmation dialog.
- *
- * Forcing it to `true` makes every icon behave like a free one: tap → confirmation dialog →
- * change. The icon swap is entirely local (a manifest activity-alias toggle) so it truly works.
+ * `FilmHeaderFragment.configureBackdrop(FragmentFilmHeaderBinding, Film)` — private, called
+ * when the film page renders its header image. We prepend a call that hands the binding + film
+ * to our helper, which swaps in a stored custom URL if one exists.
  */
+internal object FilmHeaderConfigureBackdropFingerprint : Fingerprint(
+    definingClass = FILM_HEADER_FRAGMENT,
+    name = "configureBackdrop",
+    accessFlags = listOf(AccessFlags.PRIVATE, AccessFlags.FINAL),
+    returnType = "V",
+    parameters = listOf(FRAGMENT_FILM_HEADER_BINDING, FILM),
+)
+
 internal object SettingsAppIconCanChangeFingerprint : Fingerprint(
     definingClass = SETTINGS_APP_ICON_FRAGMENT,
     name = "getCanChangeAppIcon",
@@ -64,9 +63,9 @@ internal object SettingsAppIconCanChangeFingerprint : Fingerprint(
 val customPosterPatch = bytecodePatch(
     name = "Custom poster (local)",
     description = "Adds a \"Custom poster\" row under the existing Change poster button on a " +
-        "film's action sheet, plus unlocks all Pro app icons (which are a local toggle). Pick " +
-        "a poster from TMDB or paste any image URL — saved locally and included in Mod " +
-        "settings export/import. Works on every film regardless of Patron tier.",
+        "film's action sheet, swaps in a custom film backdrop if you've set one, plus unlocks " +
+        "all Pro app icons (which are a local toggle). Pick a poster or backdrop from TMDB or " +
+        "paste any image URL — saved locally and included in Mod settings export/import.",
     default = false,
 ) {
     compatibleWith(COMPATIBILITY_LETTERBOXD)
@@ -88,9 +87,16 @@ val customPosterPatch = bytecodePatch(
             )
         }
 
-        // 3. App icon unlock — SettingsAppIconFragment.getCanChangeAppIcon()Z. Force return
-        //    true. The original body reads a Lazy boolean; we prepend an unconditional
-        //    `return true` so the rest never runs.
+        // 3. Film backdrop override — FilmHeaderFragment.configureBackdrop(binding, film).
+        //    .registers 9, 3 params → p0 = v6, p1 = v7, p2 = v8.
+        FilmHeaderConfigureBackdropFingerprint.method.apply {
+            addInstruction(
+                0,
+                "invoke-static {v7, v8}, Lapp/template/extension/settings/CustomPosterButton;->maybeOverrideFilmBackdrop(Ljava/lang/Object;Ljava/lang/Object;)V",
+            )
+        }
+
+        // 4. App icon unlock — SettingsAppIconFragment.getCanChangeAppIcon()Z.
         SettingsAppIconCanChangeFingerprint.method.apply {
             addInstructions(
                 0,

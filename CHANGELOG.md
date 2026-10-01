@@ -1,3 +1,9 @@
+## [2.8.2](https://github.com/kim20598/Test-cloudstream1/compare/v2.8.1...v2.8.2) (2026-10-01)
+
+### 🐛 Bug Fixes
+
+* scope patron fingerprint to Member only, not MemberSummary ([d22d577](https://github.com/kim20598/Test-cloudstream1/commit/d22d5778e34a7b857cd0780015e3e2e655613b50))
+
 ## [2.8.1](https://github.com/kim20598/Test-cloudstream1/compare/v2.8.0...v2.8.1) (2026-10-01)
 
 ### 🐛 Bug Fixes

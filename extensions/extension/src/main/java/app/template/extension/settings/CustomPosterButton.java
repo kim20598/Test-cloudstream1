@@ -19,22 +19,22 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Runtime for the "Custom poster" feature. Four entry points:
+ * Runtime for the "Custom poster" feature. Five entry points:
  *
  * <ul>
- *   <li>{@link #maybeOverridePoster} — from {@code PosterView.setImage}. Swaps in a custom
- *       poster URL if one is stored for the current film.</li>
- *   <li>{@link #injectRow} — from {@code FilmActionsFragment.onViewCreated}. Adds our
- *       "Custom poster" row to the action sheet.</li>
- *   <li>{@link #maybeOverrideFilmBackdrop} — from {@code FilmHeaderFragment.configureBackdrop}.
- *       Swaps in a custom film backdrop URL if one is stored.</li>
- *   <li>{@link #refreshVisiblePoster} — from the picker after saving, refreshes every visible
- *       PosterView for the film so the change is instant.</li>
+ *   <li>{@link #maybeOverridePoster} — from {@code PosterView.setImage}.</li>
+ *   <li>{@link #injectRow} — from {@code FilmActionsFragment.onViewCreated}; adds the
+ *       "Custom poster" row under "Change poster / backdrop".</li>
+ *   <li>{@link #injectBackdropRow} — same hook; adds a "Custom backdrop" row right after
+ *       the poster row.</li>
+ *   <li>{@link #maybeOverrideFilmBackdrop} — from {@code FilmHeaderFragment.configureBackdrop}.</li>
+ *   <li>{@link #refreshVisiblePoster} — from the picker after saving.</li>
  * </ul>
  */
 public final class CustomPosterButton {
 
-    private static final String TAG_ROW = "morphe_custom_poster_row";
+    private static final String TAG_ROW_POSTER = "morphe_custom_poster_row";
+    private static final String TAG_ROW_BACKDROP = "morphe_custom_backdrop_row";
     private static final Pattern IMDB = Pattern.compile("(tt\\d+)");
 
     private CustomPosterButton() {}
@@ -65,8 +65,9 @@ public final class CustomPosterButton {
         }
     }
 
-    // --- entry point 2: row injection -----------------------------------
+    // --- entry point 2: row injection (poster + backdrop) ---------------
 
+    /** Called from the injected hook at the top of {@code FilmActionsFragment.onViewCreated}. */
     public static void injectRow(Object fragment) {
         try {
             if (fragment == null) return;
@@ -82,20 +83,56 @@ public final class CustomPosterButton {
             if (!(changePosterObj instanceof View)) return;
             View reference = (View) changePosterObj;
 
-            if (container.findViewWithTag(TAG_ROW) != null) return;
+            // Poster row (existing)
+            if (container.findViewWithTag(TAG_ROW_POSTER) == null) {
+                View posterRow = buildRow(container, reference, "Custom poster", TAG_ROW_POSTER,
+                        new View.OnClickListener() {
+                            @Override public void onClick(View v) {
+                                openPicker(fragment, "poster");
+                            }
+                        });
+                if (posterRow != null) {
+                    int idx = container.indexOfChild(reference);
+                    if (idx < 0) idx = container.getChildCount() - 1;
+                    container.addView(posterRow, idx + 1, reference.getLayoutParams());
+                }
+            }
 
-            Context ctx = reference.getContext();
-            if (ctx == null) return;
+            // Backdrop row — placed right after the poster row so they group together.
+            if (container.findViewWithTag(TAG_ROW_BACKDROP) == null) {
+                View posterRow = container.findViewWithTag(TAG_ROW_POSTER);
+                View anchor = posterRow != null ? posterRow : reference;
+                View backdropRow = buildRow(container, anchor, "Custom backdrop", TAG_ROW_BACKDROP,
+                        new View.OnClickListener() {
+                            @Override public void onClick(View v) {
+                                openPicker(fragment, "backdrop");
+                            }
+                        });
+                if (backdropRow != null) {
+                    int idx = container.indexOfChild(anchor);
+                    if (idx < 0) idx = container.getChildCount() - 1;
+                    container.addView(backdropRow, idx + 1, anchor.getLayoutParams());
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static View buildRow(ViewGroup parent, View styledLike, String label, String tag,
+                                 View.OnClickListener click) {
+        try {
+            Context ctx = parent.getContext();
+            if (ctx == null) return null;
 
             Button row = new Button(ctx);
-            row.setTag(TAG_ROW);
-            row.setText("Custom poster");
+            row.setTag(tag);
+            row.setText(label);
             row.setAllCaps(false);
             row.setBackground(null);
             row.setGravity(Gravity.CENTER_VERTICAL);
 
-            if (reference instanceof TextView) {
-                TextView ref = (TextView) reference;
+            if (styledLike instanceof TextView) {
+                TextView ref = (TextView) styledLike;
                 row.setTextSize(TypedValue.COMPLEX_UNIT_PX, ref.getTextSize());
                 row.setTextColor(ref.getCurrentTextColor());
                 row.setTypeface(ref.getTypeface());
@@ -104,30 +141,15 @@ public final class CustomPosterButton {
                 if (ref.getMinHeight() > 0) row.setMinHeight(ref.getMinHeight());
             }
 
-            final Object fragRef = fragment;
-            row.setOnClickListener(new View.OnClickListener() {
-                @Override public void onClick(View v) {
-                    openPickerForFragment(fragRef);
-                }
-            });
-
-            int idx = container.indexOfChild(reference);
-            if (idx < 0) idx = container.getChildCount() - 1;
-            ViewGroup.LayoutParams lp = reference.getLayoutParams();
-            container.addView(row, idx + 1, lp);
-        } catch (Throwable ignored) {
+            row.setOnClickListener(click);
+            return row;
+        } catch (Throwable t) {
+            return null;
         }
     }
 
     // --- entry point 3: film backdrop override --------------------------
 
-    /**
-     * Called from the injected hook at the top of {@code FilmHeaderFragment.configureBackdrop}.
-     * Reads the film's slug from the Film argument (via getSummary), looks for a stored
-     * backdrop override, and — if found — loads it directly into the binding's
-     * {@code headerImageView} via Coil. The original method still runs, but our image wins
-     * because it loads later and Coil replaces the drawable.
-     */
     public static void maybeOverrideFilmBackdrop(Object binding, Object film) {
         try {
             if (binding == null || film == null) return;
@@ -147,7 +169,6 @@ public final class CustomPosterButton {
         }
     }
 
-    /** Best-effort slug extraction: try Film.getSummary().getId(), fall back to Film.getId(). */
     private static String extractFilmSlug(Object film) {
         try {
             Method getSummary = film.getClass().getMethod("getSummary");
@@ -179,6 +200,53 @@ public final class CustomPosterButton {
 
             View root = activity.getWindow().getDecorView();
             refreshInViewTree(root, filmSlug, newUrl);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    public static void refreshVisibleBackdrop(Context ctx, String filmSlug, String newUrl) {
+        try {
+            if (ctx == null || filmSlug == null) return;
+
+            Activity activity = findActivity(ctx);
+            if (activity == null || activity.getWindow() == null) return;
+
+            // The film header's backdrop is a plain ImageView on the current screen.
+            // Walk the view tree looking for it via the fragment's binding — but since we're
+            // detached from the fragment here, we instead walk for an ImageView whose
+            // id-name contains "headerImageView". Simpler: locate any View with a matching
+            // resource id name, and load into it if it's an ImageView.
+            View root = activity.getWindow().getDecorView();
+            refreshBackdropInTree(root, newUrl);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static void refreshBackdropInTree(View view, String newUrl) {
+        try {
+            if (view == null) return;
+
+            if (view instanceof ImageView) {
+                int id = view.getId();
+                if (id != 0) {
+                    String name = view.getResources().getResourceEntryName(id);
+                    if ("headerImageView".equals(name)) {
+                        if (newUrl == null || newUrl.isEmpty()) {
+                            ((ImageView) view).setImageDrawable(null);
+                        } else {
+                            CoilLoader.load(view.getContext(), newUrl, (ImageView) view);
+                        }
+                        return;
+                    }
+                }
+            }
+
+            if (view instanceof ViewGroup) {
+                ViewGroup g = (ViewGroup) view;
+                for (int i = 0; i < g.getChildCount(); i++) {
+                    refreshBackdropInTree(g.getChildAt(i), newUrl);
+                }
+            }
         } catch (Throwable ignored) {
         }
     }
@@ -233,7 +301,7 @@ public final class CustomPosterButton {
 
     // --- internal: open picker ------------------------------------------
 
-    private static void openPickerForFragment(Object fragment) {
+    private static void openPicker(Object fragment, String mode) {
         try {
             Method getFilmSummary = fragment.getClass().getMethod("getFilmSummary");
             Object filmSummary = getFilmSummary.invoke(fragment);
@@ -249,11 +317,9 @@ public final class CustomPosterButton {
             if (slug == null || slug.isEmpty()) return;
             String imdbId = reflectImdbId(filmSummary);
 
-            CustomPosterDialog dialog = new CustomPosterDialog(ctx, slug, imdbId,
+            CustomPosterDialog dialog = new CustomPosterDialog(ctx, slug, imdbId, mode,
                     new CustomPosterDialog.OnChange() {
-                        @Override public void onChange(String newUrl) {
-                            // Picker already refreshes visible views.
-                        }
+                        @Override public void onChange(String newUrl) { }
                     });
             dialog.show();
         } catch (Throwable ignored) {
@@ -310,7 +376,7 @@ public final class CustomPosterButton {
 
     // --- cache buster ---------------------------------------------------
 
-    public static void __cacheBustV5() {
+    public static void __cacheBustV6() {
         // intentionally empty
     }
 }

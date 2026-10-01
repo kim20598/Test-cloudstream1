@@ -1,3 +1,9 @@
+## [2.9.3](https://github.com/kim20598/Test-cloudstream1/compare/v2.9.2...v2.9.3) (2026-10-01)
+
+### 🐛 Bug Fixes
+
+* fetch Patron enum from nested INSTANCE field, not outer static ([d33427a](https://github.com/kim20598/Test-cloudstream1/commit/d33427a7a3a2c19e116d10e5ee050e842c463da8))
+
 ## [2.9.2](https://github.com/kim20598/Test-cloudstream1/compare/v2.9.1...v2.9.2) (2026-10-01)
 
 ### 🐛 Bug Fixes

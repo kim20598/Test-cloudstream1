@@ -1,3 +1,9 @@
+## [2.15.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.14.0...v2.15.0) (2026-10-01)
+
+### ✨ New Features
+
+* add custom backdrop row and picker mode ([07b1756](https://github.com/kim20598/Test-cloudstream1/commit/07b1756999177f42da507a3927d94a09dc2dbaab))
+
 ## [2.14.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.13.0...v2.14.0) (2026-10-01)
 
 ### ✨ New Features

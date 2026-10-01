@@ -1,3 +1,9 @@
+## [2.9.2](https://github.com/kim20598/Test-cloudstream1/compare/v2.9.1...v2.9.2) (2026-10-01)
+
+### 🐛 Bug Fixes
+
+* hook MemberStatus parser via valueOf to force patron consistently ([96850e6](https://github.com/kim20598/Test-cloudstream1/commit/96850e6f81a2bb7698fdefc06976e515d84c9afd))
+
 ## [2.9.1](https://github.com/kim20598/Test-cloudstream1/compare/v2.9.0...v2.9.1) (2026-10-01)
 
 ### 🐛 Bug Fixes

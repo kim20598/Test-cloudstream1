@@ -5,21 +5,25 @@ import android.content.Context;
 import androidx.fragment.app.Fragment;
 
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Runtime for the "Custom poster" entry point.
+ * Runtime for the "Custom poster" feature. Two entry points:
  *
- * <p>The Kotlin patch hooks {@code ActionSheetsKt.showFilmActionSheet(fragment, filmSummary)}.
- * That method runs every time the user long-presses a poster in a list or taps the 3-dot menu
- * on a film page. We get called first — fire-and-forget — and if the setup makes sense, we
- * show our {@link CustomPosterDialog}. The original method then continues and paints the app's
- * own sheet underneath.
+ * <ul>
+ *   <li>{@link #offerDialog} — called from the action-sheet hook when the user long-presses a
+ *       poster or opens the film's 3-dot menu. Shows the picker.</li>
+ *   <li>{@link #maybeOverridePoster} — called from the {@code PosterView.setImage} hook every
+ *       time a poster is about to render. If the user has a stored custom URL for this film,
+ *       substitutes it via {@code PosterView.setImageURL}.</li>
+ * </ul>
  *
- * <p>Everything is wrapped in try/catch. A failure inside this class never breaks the app's
- * normal action sheet — that's why the Kotlin hook uses no labels and no early return.
+ * <p>Everything is reflection-based and wrapped in try/catch, because we're reaching into
+ * Letterboxd's runtime from inside a bytecode hook — an exception here would take down the
+ * whole view.
  */
 public final class CustomPosterButton {
 
@@ -27,10 +31,48 @@ public final class CustomPosterButton {
 
     private CustomPosterButton() {}
 
+    // --- entry point 1: poster override ---------------------------------
+
     /**
-     * Fire-and-forget entry point. Called from the injected hook before the app's own action
-     * sheet renders. Shows the custom-poster dialog if we can resolve a film slug; otherwise
-     * returns silently and the app's sheet appears unchanged.
+     * Called from the injected hook at the top of {@code PosterView.setImage}.
+     *
+     * <p>If the film shown by this view has a custom poster stored, we call
+     * {@code PosterView.setImageURL} to load it. The original {@code setImage} still runs, but
+     * our Coil load immediately supersedes the Glide load it starts. In practice the custom
+     * poster wins.
+     *
+     * <p>The parameter is declared as {@code Object} so the injected Dalvik call site doesn't
+     * need the concrete {@code PosterView} class type — reflection handles the rest.
+     */
+    public static void maybeOverridePoster(Object posterView) {
+        try {
+            if (posterView == null) return;
+
+            Method getFilmSummary = posterView.getClass().getMethod("getFilmSummary");
+            Object filmSummary = getFilmSummary.invoke(posterView);
+            if (filmSummary == null) return;
+
+            Method getId = filmSummary.getClass().getMethod("getId");
+            Object id = getId.invoke(filmSummary);
+            if (id == null) return;
+            String slug = id.toString();
+            if (slug.isEmpty()) return;
+
+            String customUrl = CustomPosterStore.getOverride(slug);
+            if (customUrl == null || customUrl.isEmpty()) return;
+
+            URL url = new URL(customUrl);
+            Method setImageURL = posterView.getClass().getMethod("setImageURL", URL.class);
+            setImageURL.invoke(posterView, url);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    // --- entry point 2: action sheet ------------------------------------
+
+    /**
+     * Fire-and-forget entry point from the action-sheet hook. Shows the custom-poster dialog
+     * if we can resolve a film slug. Wrapped so a failure never breaks the app's own sheet.
      */
     public static void offerDialog(Fragment fragment, Object filmSummary) {
         try {
@@ -60,7 +102,6 @@ public final class CustomPosterButton {
                     });
             dialog.show();
         } catch (Throwable ignored) {
-            // Never let our code crash the action sheet.
         }
     }
 

@@ -2,7 +2,6 @@ package app.template.patches.letterboxd
 
 import app.morphe.patcher.Fingerprint
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
-import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.patch.bytecodePatch
 import app.template.patches.shared.Constants.COMPATIBILITY_LETTERBOXD
 import com.android.tools.smali.dexlib2.AccessFlags
@@ -30,10 +29,14 @@ internal object PosterViewSetImageFingerprint : Fingerprint(
 )
 
 /**
- * `ActionSheetsKt.showFilmActionSheet(Fragment, FilmSummary)` — the popup that appears when the
- * user long-presses a poster (or taps the … menu on a film). We append a "Custom poster" row to
- * whatever the app builds by calling our own helper, which adds a menu item above the sheet's
- * dismiss action. The original sheet content is untouched.
+ * `ActionSheetsKt.showFilmActionSheet(Fragment, FilmSummary)` — the popup that appears when
+ * the user long-presses a poster (in any list) or taps the 3-dot menu on a film page.
+ *
+ * We prepend a fire-and-forget call to our runtime helper. The helper shows the custom-poster
+ * dialog if the user has one configured. The original method then continues normally and
+ * displays the app's own sheet underneath — no early return, no label jumps, nothing that can
+ * invalidate the DEX. If our helper throws, the try/catch inside it swallows the error and
+ * the sheet still renders.
  */
 internal object ShowFilmActionSheetFingerprint : Fingerprint(
     definingClass = ACTION_SHEETS,
@@ -48,16 +51,16 @@ internal object ShowFilmActionSheetFingerprint : Fingerprint(
 @Suppress("unused")
 val customPosterPatch = bytecodePatch(
     name = "Custom poster (local)",
-    description = "Adds a \"Custom poster\" item under the existing Change poster button on " +
-        "a film's action sheet. Pick a poster from TMDB or paste any image URL, and it will " +
-        "be used on your device for that film — saved locally and included in Mod settings " +
-        "export/import. Works on every film regardless of Patron tier.",
+    description = "Adds a \"Custom poster\" option on a film's action sheet. Pick a poster from " +
+        "TMDB or paste any image URL, and it will be used on your device for that film — saved " +
+        "locally and included in Mod settings export/import. Works on every film regardless of " +
+        "Patron tier.",
     default = false,
 ) {
     compatibleWith(COMPATIBILITY_LETTERBOXD)
 
     execute {
-        // 1. Poster override hook (unchanged from message 1).
+        // 1. Poster override hook.
         PosterViewSetImageFingerprint.method.apply {
             addInstructions(
                 0,
@@ -80,21 +83,13 @@ val customPosterPatch = bytecodePatch(
             )
         }
 
-        // 2. Action-sheet injection. Prepends a call that hands the fragment + film summary
-        //    to our runtime helper. The helper installs a click listener on the sheet's
-        //    root which, on long-press of the poster's menu, appends our item. In practice
-        //    the simplest hook is to intercept the click that opens the sheet and route it
-        //    through us, so we control the menu content.
+        // 2. Action-sheet hook — fire-and-forget. No labels, no early return, no move-result.
+        //    Our helper runs first; the original method body then executes as usual.
         ShowFilmActionSheetFingerprint.method.apply {
             addInstructions(
                 0,
                 """
-                    invoke-static {p0, p1}, Lapp/template/extension/settings/CustomPosterButton;->maybeIntercept(Landroidx/fragment/app/Fragment;Lcom/letterboxd/api/model/FilmSummary;)Z
-                    move-result v0
-                    if-eqz v0, :orig
-                    return-void
-                    :orig
-                    nop
+                    invoke-static {p0, p1}, Lapp/template/extension/settings/CustomPosterButton;->offerDialog(Landroidx/fragment/app/Fragment;Lcom/letterboxd/api/model/FilmSummary;)V
                 """.trimIndent(),
             )
         }

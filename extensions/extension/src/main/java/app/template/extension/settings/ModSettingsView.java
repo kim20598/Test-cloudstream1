@@ -76,8 +76,6 @@ final class ModSettingsView extends ScrollView {
         boolean materialYouActive = ctx.getResources().getIdentifier(
                 "morphe_my_surface", "color", ctx.getPackageName()) != 0;
 
-        // If the build-time "Theme (baked in)" patch wrote colours into the APK, the in-app theme
-        // picker can't do anything — the resources are already frozen.
         boolean bakedThemeActive = ctx.getResources().getIdentifier(
                 "morphe_baked_theme", "color", ctx.getPackageName()) != 0;
 
@@ -239,18 +237,8 @@ final class ModSettingsView extends ScrollView {
                 new Runnable() {
                     @Override public void run() {
                         if (CustomPosterStore.size() == 0) return;
-                        ModDialog.show(ctx,
-                                "Clear all custom posters?",
-                                "This removes every custom poster you've set. The originals will " +
-                                        "return. Your other settings are untouched.",
-                                "Clear all", "Cancel",
-                                new Runnable() {
-                                    @Override public void run() {
-                                        CustomPosterStore.replaceAll(null);
-                                        rebuildAndRestart();
-                                    }
-                                },
-                                null);
+                        CustomPosterStore.replaceAll(null);
+                        rebuildAndRestart();
                     }
                 }));
 

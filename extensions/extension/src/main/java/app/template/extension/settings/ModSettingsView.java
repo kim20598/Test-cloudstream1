@@ -211,7 +211,7 @@ final class ModSettingsView extends ScrollView {
             }
         });
 
-        // --- Custom poster / backdrop ---------------------------------
+        // --- Custom images ---------------------------------------------
         header("Custom images");
 
         column.addView(choiceRow("TMDB API key",
@@ -242,22 +242,10 @@ final class ModSettingsView extends ScrollView {
                 new Runnable() {
                     @Override public void run() {
                         if (totalCustom == 0) return;
-                        ModDialog.show(ctx,
-                                "Clear all custom images?",
-                                "This removes every custom poster, film backdrop, and profile " +
-                                        "backdrop you've set. The originals will return on next " +
-                                        "visit. Your other settings are untouched.",
-                                "Clear all",
-                                "Cancel",
-                                new Runnable() {
-                                    @Override public void run() {
-                                        CustomPosterStore.replaceAll(null);
-                                        CustomPosterStore.replaceAllBackdrops(null);
-                                        Prefs.putString(Prefs.KEY_PROFILE_BACKDROP, "");
-                                        rebuildAndRestart();
-                                    }
-                                },
-                                null);
+                        CustomPosterStore.replaceAll(null);
+                        CustomPosterStore.replaceAllBackdrops(null);
+                        Prefs.putString(Prefs.KEY_PROFILE_BACKDROP, "");
+                        rebuildAndRestart();
                     }
                 }));
 

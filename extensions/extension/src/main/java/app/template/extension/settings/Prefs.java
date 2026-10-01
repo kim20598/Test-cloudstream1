@@ -61,6 +61,9 @@ public final class Prefs {
     // "Custom poster (local)" — JSON map of filmSlug -> backdropUrl (separate from posters)
     public static final String KEY_CUSTOM_BACKDROPS = "custom_backdrops";
 
+    // Profile banner image URL (single value, not per-film)
+    public static final String KEY_PROFILE_BACKDROP = "profile_backdrop";
+
     // TMDB API key for the poster picker (user-supplied, free from themoviedb.org)
     public static final String KEY_TMDB_API_KEY = "tmdb_api_key";
 

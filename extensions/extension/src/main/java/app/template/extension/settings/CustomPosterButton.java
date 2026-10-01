@@ -138,4 +138,14 @@ public final class CustomPosterButton {
         }
         return null;
     }
+
+    // --- cache buster ---------------------------------------------------
+
+    /**
+     * Marks the class as changed so Gradle's incremental compiler cannot reuse a previously
+     * built {@code extension.mpe}. Called from nowhere; presence is the point.
+     */
+    public static void __cacheBustV2() {
+        // intentionally empty
+    }
 }

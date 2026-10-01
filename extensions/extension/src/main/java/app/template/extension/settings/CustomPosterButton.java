@@ -26,15 +26,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Runtime for the "Custom poster" feature. Every override uses the same reliable pattern:
+ * Runtime for the "Custom poster" feature. Three override targets — poster, film backdrop,
+ * profile backdrop — each using the appropriate timing:
  *
- *   1. Read the stored URL for the film / profile
- *   2. Cancel any in-flight Glide request bound to the target ImageView
- *   3. Load our URL via Coil
- *
- * The Glide cancel is what stops the original server URL from overwriting our image a moment
- * later. Because we run this on every render via the injected hooks, overrides persist across
- * navigation instead of only appearing on the same screen where the dialog was opened.
+ * <ul>
+ *   <li><b>Poster</b> uses {@code PosterView.setImageURL()} synchronously inside the hook.
+ *       No gap, no flicker, server image never appears.</li>
+ *   <li><b>Film backdrop</b> uses {@code postDelayed(1)} so our Coil load lands one frame
+ *       after the host method's Glide request has already been queued. Cancels Glide first.</li>
+ *   <li><b>Profile backdrop</b> same as film backdrop.</li>
+ * </ul>
  */
 public final class CustomPosterButton {
 
@@ -46,7 +47,7 @@ public final class CustomPosterButton {
 
     private CustomPosterButton() {}
 
-    // --- 1: poster override (runs on every PosterView render) -----------
+    // --- 1: poster override (synchronous, no flicker) -------------------
 
     public static void maybeOverridePoster(Object posterView) {
         try {
@@ -63,23 +64,13 @@ public final class CustomPosterButton {
             String customUrl = CustomPosterStore.getOverride(slug);
             if (customUrl == null || customUrl.isEmpty()) return;
 
-            // Reach the underlying ImageView of the PosterView and load directly.
-            // The PosterView has a public setImageURL(URL) that manages its internal ImageView,
-            // but that path uses Coil internally and might race with the app's Glide call.
-            // We call it on the main thread after the host method returns.
-            MAIN.post(new Runnable() {
-                @Override public void run() {
-                    try {
-                        URL url = new URL(customUrl);
-                        posterView.getClass().getMethod("setImageURL", URL.class)
-                                .invoke(posterView, url);
-                    } catch (Throwable ignored) {}
-                }
-            });
+            // Synchronous — setImageURL handles its own ImageView, no post() needed.
+            URL url = new URL(customUrl);
+            posterView.getClass().getMethod("setImageURL", URL.class).invoke(posterView, url);
         } catch (Throwable ignored) {}
     }
 
-    // --- 2: film action sheet: three rows -------------------------------
+    // --- 2: film action sheet row injection -----------------------------
 
     public static void injectRow(Object fragment) {
         try {
@@ -93,7 +84,6 @@ public final class CustomPosterButton {
             if (!(refObj instanceof View)) return;
             View reference = (View) refObj;
 
-            // Always start clean.
             removeByTag(container, TAG_ROW_POSTER);
             removeByTag(container, TAG_ROW_BACKDROP);
             removeByTag(container, TAG_ROW_PROFILE);
@@ -167,7 +157,7 @@ public final class CustomPosterButton {
         } catch (Throwable t) { return null; }
     }
 
-    // --- 3: film backdrop override (runs on every FilmHeader render) ----
+    // --- 3: film backdrop override (postDelayed for stability) ----------
 
     public static void maybeOverrideFilmBackdrop(Object binding, Object film) {
         try {
@@ -181,7 +171,7 @@ public final class CustomPosterButton {
             if (!(headerImageView instanceof ImageView)) return;
             final ImageView iv = (ImageView) headerImageView;
 
-            applyImageOverride(iv, customUrl);
+            applyImageOverrideDeferred(iv, customUrl);
         } catch (Throwable ignored) {}
     }
 
@@ -199,24 +189,25 @@ public final class CustomPosterButton {
             String url = Prefs.getString(Prefs.KEY_PROFILE_BACKDROP, "");
             if (url == null || url.isEmpty()) return;
 
-            applyImageOverride(iv, url);
+            applyImageOverrideDeferred(iv, url);
         } catch (Throwable ignored) {}
     }
 
     /**
-     * The one-shot replacement mechanism. Cancels any pending Glide request on the view,
-     * then Coil-loads the override URL.
+     * Cancel any in-flight Glide request, then Coil-load the override. Runs one frame after
+     * the calling hook returns so the host method's own Glide request has been queued and
+     * can be properly cancelled before we take over.
      */
-    private static void applyImageOverride(final ImageView iv, final String url) {
+    private static void applyImageOverrideDeferred(final ImageView iv, final String url) {
         if (iv == null || url == null || url.isEmpty()) return;
-        MAIN.post(new Runnable() {
+        MAIN.postDelayed(new Runnable() {
             @Override public void run() {
                 try {
                     cancelGlide(iv);
                     CoilLoader.load(iv.getContext(), url, iv);
                 } catch (Throwable ignored) {}
             }
-        });
+        }, 1);
     }
 
     private static void cancelGlide(View view) {
@@ -276,7 +267,6 @@ public final class CustomPosterButton {
             Prefs.putString(Prefs.KEY_PROFILE_BACKDROP, url);
             toast(ctx, "Profile backdrop set");
 
-            // Refresh any visible profile screen now.
             Activity activity = findActivity(ctx);
             if (activity != null) {
                 View root = activity.getWindow().getDecorView();
@@ -294,7 +284,7 @@ public final class CustomPosterButton {
                     try {
                         String name = view.getResources().getResourceEntryName(id);
                         if ("userBackdrop".equals(name)) {
-                            applyImageOverride((ImageView) view, url);
+                            applyImageOverrideDeferred((ImageView) view, url);
                             return;
                         }
                     } catch (Throwable ignored) {}
@@ -309,43 +299,15 @@ public final class CustomPosterButton {
         } catch (Throwable ignored) {}
     }
 
-    // --- instant refresh from the picker dialog -------------------------
+    // --- refresh from the picker dialog ---------------------------------
 
-    /**
-     * Called by CustomPosterDialog after a poster is picked. Uses FragmentManager to find
-     * the currently-visible FilmHeaderFragment and reloads the poster immediately.
-     */
     public static void refreshVisiblePoster(Context ctx, String filmSlug, String newUrl) {
         try {
             if (ctx == null || filmSlug == null) return;
             Activity activity = findActivity(ctx);
             if (activity == null) return;
-
-            // Update any visible PosterView directly.
             View root = activity.getWindow().getDecorView();
             refreshPosterInTree(root, filmSlug, newUrl);
-
-            // Also reach through FragmentManager in case the tree walk missed one.
-            if (activity instanceof FragmentActivity) {
-                FragmentManager fm = ((FragmentActivity) activity).getSupportFragmentManager();
-                applyToFilmHeaderFragments(fm, newUrl);
-            }
-        } catch (Throwable ignored) {}
-    }
-
-    private static void applyToFilmHeaderFragments(FragmentManager fm, String newUrl) {
-        try {
-            List<Fragment> frags = fm.getFragments();
-            for (Fragment f : frags) {
-                try {
-                    Object binding = readField(f, "binding");
-                    if (binding == null) continue;
-                    Object iv = readField(binding, "headerImageView");
-                    if (iv instanceof ImageView) {
-                        applyImageOverride((ImageView) iv, newUrl);
-                    }
-                } catch (Throwable ignored) {}
-            }
         } catch (Throwable ignored) {}
     }
 
@@ -380,13 +342,27 @@ public final class CustomPosterButton {
             if (ctx == null || newUrl == null) return;
             Activity activity = findActivity(ctx);
             if (activity == null) return;
-
             View root = activity.getWindow().getDecorView();
             refreshFilmBackdropInTree(root, newUrl);
-
             if (activity instanceof FragmentActivity) {
                 FragmentManager fm = ((FragmentActivity) activity).getSupportFragmentManager();
                 applyToFilmHeaderFragments(fm, newUrl);
+            }
+        } catch (Throwable ignored) {}
+    }
+
+    private static void applyToFilmHeaderFragments(FragmentManager fm, String newUrl) {
+        try {
+            List<Fragment> frags = fm.getFragments();
+            for (Fragment f : frags) {
+                try {
+                    Object binding = readField(f, "binding");
+                    if (binding == null) continue;
+                    Object iv = readField(binding, "headerImageView");
+                    if (iv instanceof ImageView) {
+                        applyImageOverrideDeferred((ImageView) iv, newUrl);
+                    }
+                } catch (Throwable ignored) {}
             }
         } catch (Throwable ignored) {}
     }
@@ -400,7 +376,7 @@ public final class CustomPosterButton {
                     try {
                         String name = view.getResources().getResourceEntryName(id);
                         if ("headerImageView".equals(name)) {
-                            applyImageOverride((ImageView) view, newUrl);
+                            applyImageOverrideDeferred((ImageView) view, newUrl);
                             return;
                         }
                     } catch (Throwable ignored) {}
@@ -489,5 +465,5 @@ public final class CustomPosterButton {
         catch (Throwable ignored) {}
     }
 
-    public static void __cacheBustV10() {}
+    public static void __cacheBustV11() {}
 }

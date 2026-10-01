@@ -19,6 +19,9 @@ import java.util.Map;
  * don't go through {@link #KEYS} because there can be arbitrarily many of them and their
  * values are URLs, not fixed enums. Each map is written whole on export and replaced whole on
  * import.
+ *
+ * <p>The profile backdrop is a single string, so it goes through {@link #KEYS} like any other
+ * string setting.
  */
 public final class ConfigTransfer {
 
@@ -53,6 +56,7 @@ public final class ConfigTransfer {
         KEYS.put(Prefs.KEY_HIDE_RATINGS_ANIMATION, STR);
         KEYS.put(Prefs.KEY_HIDE_RATINGS_CONFETTI_COLOR, STR);
         KEYS.put(Prefs.KEY_HIDE_RATINGS_HAPTIC, BOOL);
+        KEYS.put(Prefs.KEY_PROFILE_BACKDROP, STR);
         // Note: KEY_TMDB_API_KEY is deliberately NOT in this list. It's a user-specific
         // credential (their personal API key), not a shareable setting. Exporting it into a
         // config file someone posts publicly would leak it.
@@ -196,6 +200,9 @@ public final class ConfigTransfer {
                 } catch (Throwable t) {
                     return false;
                 }
+            case Prefs.KEY_PROFILE_BACKDROP:
+                // URL string. Just sanity-check length; empty is valid (means "cleared").
+                return v.length() <= 2048;
             default:
                 return v.length() <= 512; // theme_accent, nav_items, home_tabs — reader-sanitised
         }

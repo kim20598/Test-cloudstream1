@@ -53,29 +53,16 @@ val buildTimeThemePatch = resourcePatch(
             else -> return@execute
         }
 
-        // Marker resource: presence of this colour tells the runtime code the build-time theme
-        // patch ran, so the in-app theme picker can grey itself out.
-        document("res/values/colors.xml").use { document ->
-            val resources = document.documentElement
-                ?: throw PatchException("res/values/colors.xml has no root element")
-            if (!hasColor(document, "morphe_baked_theme")) {
-                resources.appendChild(
-                    document.createElement("color").apply {
-                        setAttribute("name", "morphe_baked_theme")
-                        textContent = "#FF000000"
-                    }
-                )
-            }
-        }
-
-        // Values are written to both the day and night variants when both exist. Letterboxd's dark
-        // theme is always active, but keeping both in sync avoids a flash if a future app build
-        // ever reads the day one. Not every APK ships both files — `values-night` is absent on
-        // several Letterboxd versions, and the patcher's `document(...)` throws on a missing path,
-        // so we only process the ones that are actually present.
+        // Not every Letterboxd version ships both `values/colors.xml` and `values-night/colors.xml`
+        // — `values-night` in particular is missing on several releases. And on some versions
+        // neither exists in the patcher's virtual FS until later stages, so we probe for each
+        // path individually and skip the ones that aren't there. The patcher's `document(path)`
+        // call throws on a missing file, so the existence check must run first.
         //
-        // `get(...)` is a ResourcePatchContext method, only callable inside this `execute` block,
-        // which is why the existence check lives here instead of in a helper function.
+        // The marker resource `morphe_baked_theme` — which tells the runtime Mod settings screen
+        // that a baked theme is active — is written into whichever colors.xml we find first.
+        var markerWritten = false
+
         for (path in listOf("res/values/colors.xml", "res/values-night/colors.xml")) {
             val exists = try {
                 get(path).isFile
@@ -83,12 +70,24 @@ val buildTimeThemePatch = resourcePatch(
                 false
             }
             if (!exists) continue
+
             document(path).use { document ->
                 val resources = document.documentElement
                     ?: throw PatchException("$path has no root element")
+
                 palette.forEach { (name, hex) ->
                     writeColorIfPresent(document, resources, name, hex)
                 }
+
+                if (!markerWritten && !hasColor(document, "morphe_baked_theme")) {
+                    resources.appendChild(
+                        document.createElement("color").apply {
+                            setAttribute("name", "morphe_baked_theme")
+                            textContent = "#FF000000"
+                        }
+                    )
+                }
+                markerWritten = true
             }
         }
     }

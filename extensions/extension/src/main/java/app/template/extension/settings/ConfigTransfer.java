@@ -14,16 +14,18 @@ import java.util.Map;
  * is left alone, so a config from an older build can't wipe newer settings. Values are sanity-
  * checked; a bad one is skipped rather than aborting the whole import.
  *
- * <p>Custom poster overrides live under a separate top-level key ({@code customPosters}) as a
- * JSON map of filmSlug -> posterUrl. They don't go through {@link #KEYS} because there can be
- * arbitrarily many of them and their values are URLs, not fixed enums. The map is written whole
- * on export and replaced whole on import.
+ * <p>Custom poster and backdrop overrides live under two top-level keys
+ * ({@code customPosters} and {@code customBackdrops}) as JSON maps of filmSlug -> url. They
+ * don't go through {@link #KEYS} because there can be arbitrarily many of them and their
+ * values are URLs, not fixed enums. Each map is written whole on export and replaced whole on
+ * import.
  */
 public final class ConfigTransfer {
 
     public static final int FORMAT = 1;
     private static final String APP = "letterboxd-morphe-patches";
     private static final String KEY_CUSTOM_POSTERS_ROOT = "customPosters";
+    private static final String KEY_CUSTOM_BACKDROPS_ROOT = "customBackdrops";
 
     private static final boolean STR = false;
     private static final boolean BOOL = true;
@@ -79,12 +81,21 @@ public final class ConfigTransfer {
             root.put("app", APP);
             root.put("settings", settings);
 
-            // Custom poster overrides — a map of slug -> URL. Only include the key if there's
-            // at least one entry, so an empty config stays byte-identical to older exports.
+            // Custom poster overrides — a map of slug -> URL. Only include if there's at least
+            // one entry so an empty config stays byte-identical to older exports.
             try {
                 JSONObject posters = CustomPosterStore.snapshot();
                 if (posters != null && posters.length() > 0) {
                     root.put(KEY_CUSTOM_POSTERS_ROOT, posters);
+                }
+            } catch (Throwable ignored) {
+            }
+
+            // Custom film backdrop overrides — same shape, separate key.
+            try {
+                JSONObject backdrops = CustomPosterStore.snapshotBackdrops();
+                if (backdrops != null && backdrops.length() > 0) {
+                    root.put(KEY_CUSTOM_BACKDROPS_ROOT, backdrops);
                 }
             } catch (Throwable ignored) {
             }
@@ -102,13 +113,15 @@ public final class ConfigTransfer {
         Prefs.load(ctx);
         JSONObject settings;
         JSONObject posters = null;
+        JSONObject backdrops = null;
         try {
             JSONObject root = new JSONObject(text);
             if (root.optInt("format", 0) != FORMAT) return -1;
             settings = root.optJSONObject("settings");
             if (settings == null) return -1;
-            // Optional — an older config without custom posters is still valid.
+            // Both optional — an older config without them is still valid.
             posters = root.optJSONObject(KEY_CUSTOM_POSTERS_ROOT);
+            backdrops = root.optJSONObject(KEY_CUSTOM_BACKDROPS_ROOT);
         } catch (Throwable t) {
             return -1;
         }
@@ -133,14 +146,20 @@ public final class ConfigTransfer {
             }
         }
 
-        // Custom poster overrides — replace the whole map on import (merge is meaningless here:
-        // we don't have an obvious "which wins" rule, and a user re-importing a config expects
-        // exactly what they exported). Count each slug as an applied "setting" so the toast
-        // reports something meaningful.
+        // Custom poster overrides — replace the whole map on import.
         try {
             if (posters != null) {
                 CustomPosterStore.replaceAll(posters);
                 applied += posters.length();
+            }
+        } catch (Throwable ignored) {
+        }
+
+        // Custom backdrop overrides — same treatment.
+        try {
+            if (backdrops != null) {
+                CustomPosterStore.replaceAllBackdrops(backdrops);
+                applied += backdrops.length();
             }
         } catch (Throwable ignored) {
         }
@@ -152,7 +171,6 @@ public final class ConfigTransfer {
     private static boolean validString(String key, String v) {
         switch (key) {
             case Prefs.KEY_THEME_SURFACE:
-                // New themes (purple, midnight) added; keep backward compat with old exports.
                 return v.isEmpty()
                         || v.equals("stock")
                         || v.equals("oled")

@@ -73,14 +73,13 @@ final class ModSettingsView extends ScrollView {
 
         boolean themeAvailable = ModTheme.isSupported();
 
-        // If the build-time "Theme (baked in)" patch wrote colours into the APK, the in-app theme
-        // picker can't do anything — the resources are already frozen. Detect that via a marker
-        // colour the patch writes, and grey the row out with an explanatory subtitle.
-        boolean bakedThemeActive = ctx.getResources().getIdentifier(
-                "morphe_baked_theme", "color", ctx.getPackageName()) != 0;
-
         boolean materialYouActive = ctx.getResources().getIdentifier(
                 "morphe_my_surface", "color", ctx.getPackageName()) != 0;
+
+        // If the build-time "Theme (baked in)" patch wrote colours into the APK, the in-app theme
+        // picker can't do anything — the resources are already frozen.
+        boolean bakedThemeActive = ctx.getResources().getIdentifier(
+                "morphe_baked_theme", "color", ctx.getPackageName()) != 0;
 
         header("Theme");
         if (bakedThemeActive) {
@@ -215,6 +214,45 @@ final class ModSettingsView extends ScrollView {
                 setRowEnabled(streamingAppRow, checked);
             }
         });
+
+        // --- Custom poster ---
+        header("Custom poster");
+        column.addView(choiceRow("TMDB API key",
+                Prefs.hasTmdbKey()
+                        ? "Configured — tap to change"
+                        : "Set a free key from themoviedb.org so the picker can show posters",
+                Prefs.hasTmdbKey() ? "Edit" : "Set",
+                new Runnable() {
+                    @Override public void run() {
+                        new TmdbKeyDialog(ctx, new TmdbKeyDialog.OnSave() {
+                            @Override public void onSave(String key) {
+                                Prefs.setTmdbKey(key);
+                                rebuildAndRestart();
+                            }
+                        }).show();
+                    }
+                }));
+        column.addView(actionRow("Clear all custom posters",
+                CustomPosterStore.size() == 0
+                        ? "No custom posters set"
+                        : (CustomPosterStore.size() + " film" + (CustomPosterStore.size() == 1 ? "" : "s") + " customised — tap to reset"),
+                new Runnable() {
+                    @Override public void run() {
+                        if (CustomPosterStore.size() == 0) return;
+                        ModDialog.show(ctx,
+                                "Clear all custom posters?",
+                                "This removes every custom poster you've set. The originals will " +
+                                        "return. Your other settings are untouched.",
+                                "Clear all", "Cancel",
+                                new Runnable() {
+                                    @Override public void run() {
+                                        CustomPosterStore.replaceAll(null);
+                                        rebuildAndRestart();
+                                    }
+                                },
+                                null);
+                    }
+                }));
 
         header("Ratings");
         final PillToggle hideRatings = new PillToggle(ctx);

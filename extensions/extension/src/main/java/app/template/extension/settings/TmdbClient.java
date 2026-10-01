@@ -11,42 +11,32 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 /**
- * Minimal TMDB client — used by {@link CustomPosterDialog} to fetch a grid of posters for a
- * film, keyed on its IMDb id.
- *
- * <p>Requires a free TMDB API key, set by the user in Mod settings
- * ({@link Prefs#KEY_TMDB_API_KEY}). If the key is empty, methods return an empty list and the
- * picker falls back to just the paste-URL field.
- *
- * <p>Runs synchronously on a background thread; callers should invoke on a worker.
+ * Minimal TMDB client. Requires a free API key set in Mod settings.
  */
 public final class TmdbClient {
 
-    private static final String IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
-    private static final String API_BASE   = "https://api.themoviedb.org/3";
+    private static final String POSTER_BASE   = "https://image.tmdb.org/t/p/w500";
+    private static final String BACKDROP_BASE = "https://image.tmdb.org/t/p/w780";
+    private static final String API_BASE      = "https://api.themoviedb.org/3";
 
     private TmdbClient() {}
 
-    /** True if a TMDB API key is currently configured. */
     public static boolean isConfigured() {
         String key = Prefs.getString(Prefs.KEY_TMDB_API_KEY, "");
         return key != null && !key.trim().isEmpty();
     }
 
-    /**
-     * Fetches every poster URL TMDB has for the film matching [imdbId] (e.g. {@code tt0209144}).
-     *
-     * <p>Returns an empty list on any failure (no key, no match, network error, parse error).
-     * The caller treats empty as "show the paste-URL field only".
-     */
     public static List<String> fetchPosters(String imdbId) {
+        return fetch(imdbId, "posters", POSTER_BASE);
+    }
+
+    public static List<String> fetchBackdrops(String imdbId) {
+        return fetch(imdbId, "backdrops", BACKDROP_BASE);
+    }
+
+    private static List<String> fetch(String imdbId, String kind, String imageBase) {
         List<String> out = new ArrayList<>();
         if (imdbId == null || imdbId.isEmpty()) return out;
         if (!isConfigured()) return out;
@@ -54,7 +44,6 @@ public final class TmdbClient {
         try {
             String key = Prefs.getString(Prefs.KEY_TMDB_API_KEY, "").trim();
 
-            // Step 1: /find/{imdbId}?external_source=imdb_id -> tmdb movie id
             String findUrl = API_BASE + "/find/" + urlEncode(imdbId)
                     + "?api_key=" + urlEncode(key)
                     + "&external_source=imdb_id";
@@ -68,49 +57,25 @@ public final class TmdbClient {
             int tmdbId = firstMovie.optInt("id", -1);
             if (tmdbId <= 0) return out;
 
-            // Step 2: /movie/{id}/images -> posters array
             String imagesUrl = API_BASE + "/movie/" + tmdbId + "/images"
                     + "?api_key=" + urlEncode(key)
                     + "&include_image_language=en,null";
             JSONObject images = httpGetJson(imagesUrl);
             if (images == null) return out;
 
-            JSONArray posters = images.optJSONArray("posters");
-            if (posters == null) return out;
-            for (int i = 0; i < posters.length(); i++) {
-                JSONObject p = posters.optJSONObject(i);
+            JSONArray arr = images.optJSONArray(kind);
+            if (arr == null) return out;
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject p = arr.optJSONObject(i);
                 if (p == null) continue;
                 String path = p.optString("file_path", "");
                 if (path == null || path.isEmpty()) continue;
-                out.add(IMAGE_BASE + path);
+                out.add(imageBase + path);
             }
         } catch (Throwable ignored) {
-            // Return whatever we got before the failure — often partial, still useful.
         }
         return out;
     }
-
-    /**
-     * Convenience wrapper: fetches posters on a single-use background thread and blocks the
-     * calling thread for up to [timeoutSeconds]. Do not call from the UI thread.
-     */
-    public static List<String> fetchPostersBlocking(String imdbId, int timeoutSeconds) {
-        ExecutorService exec = Executors.newSingleThreadExecutor();
-        try {
-            Future<List<String>> f = exec.submit(new Callable<List<String>>() {
-                @Override public List<String> call() {
-                    return fetchPosters(imdbId);
-                }
-            });
-            return f.get(timeoutSeconds, TimeUnit.SECONDS);
-        } catch (Throwable t) {
-            return new ArrayList<>();
-        } finally {
-            exec.shutdownNow();
-        }
-    }
-
-    // --- internals --------------------------------------------------------
 
     private static JSONObject httpGetJson(String urlStr) {
         HttpURLConnection conn = null;
@@ -144,7 +109,7 @@ public final class TmdbClient {
             String line;
             while ((line = r.readLine()) != null) {
                 sb.append(line);
-                if (sb.length() > 500_000) break; // sanity cap
+                if (sb.length() > 500_000) break;
             }
             return sb.toString();
         } catch (Throwable t) {

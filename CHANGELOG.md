@@ -1,3 +1,9 @@
+## [2.8.1](https://github.com/kim20598/Test-cloudstream1/compare/v2.8.0...v2.8.1) (2026-10-01)
+
+### 🐛 Bug Fixes
+
+* match patron fingerprint by method name not string literal ([ed5134a](https://github.com/kim20598/Test-cloudstream1/commit/ed5134a2ec65133ad34114c176527459ffa600d7))
+
 ## [2.8.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.7.1...v2.8.0) (2026-09-30)
 
 ### 🐛 Bug Fixes

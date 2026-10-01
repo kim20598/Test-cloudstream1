@@ -10,11 +10,13 @@ private const val POSTER_VIEW =
     "Lcom/letterboxd/letterboxd/ui/views/PosterView;"
 private const val IMAGE =
     "Lcom/letterboxd/api/model/Image;"
-private const val ACTION_SHEETS =
-    "Lcom/letterboxd/letterboxd/ActionSheetsKt;"
-private const val FILM_SUMMARY =
-    "Lcom/letterboxd/api/model/FilmSummary;"
+private const val FILM_ACTIONS_FRAGMENT =
+    "Lcom/letterboxd/letterboxd/ui/fragments/film/FilmActionsFragment;"
 
+/**
+ * `PosterView.setImage(Image, int, Function0)` — poster rendering. Prepends a check for a
+ * stored custom poster URL, loads it via setImageURL if present.
+ */
 internal object PosterViewSetImageFingerprint : Fingerprint(
     definingClass = POSTER_VIEW,
     name = "setImage",
@@ -23,29 +25,36 @@ internal object PosterViewSetImageFingerprint : Fingerprint(
     parameters = listOf(IMAGE, "I", "Lkotlin/jvm/functions/Function0;"),
 )
 
-internal object ShowFilmActionSheetFingerprint : Fingerprint(
-    definingClass = ACTION_SHEETS,
-    name = "showFilmActionSheet",
+/**
+ * `FilmActionsFragment.onViewCreated(View, Bundle)` — runs once when the sheet is created.
+ * We append a call that injects our "Custom poster" row into the action list, right under
+ * "Change poster / backdrop". Native-looking, no dialog overlay on top of the sheet.
+ */
+internal object FilmActionsOnViewCreatedFingerprint : Fingerprint(
+    definingClass = FILM_ACTIONS_FRAGMENT,
+    name = "onViewCreated",
+    accessFlags = listOf(AccessFlags.PUBLIC),
     returnType = "V",
     parameters = listOf(
-        "Landroidx/fragment/app/Fragment;",
-        FILM_SUMMARY,
+        "Landroid/view/View;",
+        "Landroid/os/Bundle;",
     ),
 )
 
 @Suppress("unused")
 val customPosterPatch = bytecodePatch(
     name = "Custom poster (local)",
-    description = "Adds a \"Custom poster\" option on a film's action sheet. Pick a poster from " +
-        "TMDB or paste any image URL, and it will be used on your device for that film — saved " +
-        "locally and included in Mod settings export/import. Works on every film regardless of " +
-        "Patron tier.",
+    description = "Adds a \"Custom poster\" row under the existing Change poster button on a " +
+        "film's action sheet. Pick a poster from TMDB or paste any image URL, and it will be " +
+        "used on your device for that film — saved locally and included in Mod settings " +
+        "export/import. Works on every film regardless of Patron tier.",
     default = false,
 ) {
     compatibleWith(COMPATIBILITY_LETTERBOXD)
 
     execute {
-        // PosterView.setImage(Image, int, Function0) — .registers 6, 3 params, p0 = v3.
+        // 1. Poster override — PosterView.setImage(Image, int, Function0). .registers 6,
+        //    3 params, p0 = v3.
         PosterViewSetImageFingerprint.method.apply {
             addInstruction(
                 0,
@@ -53,14 +62,13 @@ val customPosterPatch = bytecodePatch(
             )
         }
 
-        // ActionSheetsKt.showFilmActionSheet(Fragment, FilmSummary) — .registers 9,
-        // 2 params, p0 = v7, p1 = v8. Note the runtime method's second parameter is
-        // declared as Object, so we must call it with that descriptor — Dalvik resolves
-        // by exact descriptor, not by assignability.
-        ShowFilmActionSheetFingerprint.method.apply {
+        // 2. Row injection — FilmActionsFragment.onViewCreated(View, Bundle). 2 params,
+        //    p0 = the fragment. Prepends a call that walks the fragment's binding and
+        //    inserts our row into userButtonsView, right after buttonChangePoster.
+        FilmActionsOnViewCreatedFingerprint.method.apply {
             addInstruction(
                 0,
-                "invoke-static {v7, v8}, Lapp/template/extension/settings/CustomPosterButton;->offerDialog(Landroidx/fragment/app/Fragment;Ljava/lang/Object;)V",
+                "invoke-static {p0}, Lapp/template/extension/settings/CustomPosterButton;->injectRow(Ljava/lang/Object;)V",
             )
         }
     }

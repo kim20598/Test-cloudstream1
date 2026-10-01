@@ -1,3 +1,9 @@
+## [2.15.1](https://github.com/kim20598/Test-cloudstream1/compare/v2.15.0...v2.15.1) (2026-10-01)
+
+### 🐛 Bug Fixes
+
+* cancel pending Glide request before Coil override; simplify row injection ([08c8bfd](https://github.com/kim20598/Test-cloudstream1/commit/08c8bfdb7f81b64f052ee1a487020b3bce6c4ed4))
+
 ## [2.15.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.14.0...v2.15.0) (2026-10-01)
 
 ### ✨ New Features

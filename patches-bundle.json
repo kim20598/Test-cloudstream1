@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-01T15:36:21",
-  "description": "## [2.15.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.14.0...v2.15.0) (2026-10-01)\n\n### ✨ New Features\n\n* add custom backdrop row and picker mode ([07b1756](https://github.com/kim20598/Test-cloudstream1/commit/07b1756999177f42da507a3927d94a09dc2dbaab))",
-  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.15.0/patches-2.15.0.mpp",
+  "created_at": "2026-10-01T16:44:41",
+  "description": "## [2.15.1](https://github.com/kim20598/Test-cloudstream1/compare/v2.15.0...v2.15.1) (2026-10-01)\n\n### 🐛 Bug Fixes\n\n* cancel pending Glide request before Coil override; simplify row injection ([08c8bfd](https://github.com/kim20598/Test-cloudstream1/commit/08c8bfdb7f81b64f052ee1a487020b3bce6c4ed4))",
+  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.15.1/patches-2.15.1.mpp",
   "signature_download_url": "",
-  "version": "2.15.0"
+  "version": "2.15.1"
 }

@@ -1,3 +1,9 @@
+## [2.13.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.12.1...v2.13.0) (2026-10-01)
+
+### ✨ New Features
+
+* unlock Pro app icons via local toggle override ([391930b](https://github.com/kim20598/Test-cloudstream1/commit/391930bba83e9ac4315f9b396ddf3b80972fd6c1))
+
 ## [2.12.1](https://github.com/kim20598/Test-cloudstream1/compare/v2.12.0...v2.12.1) (2026-10-01)
 
 ### 🐛 Bug Fixes

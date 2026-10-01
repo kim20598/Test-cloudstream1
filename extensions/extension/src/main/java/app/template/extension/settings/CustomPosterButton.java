@@ -1,14 +1,14 @@
 package app.template.extension.settings;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
-
-import androidx.fragment.app.Fragment;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -26,7 +26,10 @@ import java.util.regex.Pattern;
  *       substitutes it via {@code PosterView.setImageURL}.</li>
  *   <li>{@link #injectRow} — called from {@code FilmActionsFragment.onViewCreated}. Inserts a
  *       "Custom poster" row into the action sheet, right below "Change poster / backdrop".</li>
- *   <li>{@link #openPickerForFragment} — internal, opens the picker when the row is tapped.</li>
+ *   <li>{@link #refreshVisiblePoster} — called from the picker after the user chooses a poster.
+ *       Walks the current activity's view tree, finds every {@code PosterView} for this film,
+ *       and calls {@code setImageURL} on each with the new URL. This is what makes the swap
+ *       instant — the poster updates in place, no fragment reload, no flicker.</li>
  * </ul>
  *
  * <p>All reflection is wrapped in try/catch — an exception here would take down the host view.
@@ -134,6 +137,82 @@ public final class CustomPosterButton {
         }
     }
 
+    // --- entry point 3: instant refresh ---------------------------------
+
+    /**
+     * Called from the picker right after a URL is saved. Walks the current activity's view
+     * tree, finds every {@code PosterView} whose film matches {@code filmSlug}, and asks each
+     * one to load the new URL via {@code setImageURL}.
+     *
+     * <p>Runs on the UI thread (callers are already there). The image swap is handled by Coil,
+     * which cross-fades in place — no fragment reload, no flicker.
+     */
+    public static void refreshVisiblePoster(Context ctx, String filmSlug, String newUrl) {
+        try {
+            if (ctx == null || filmSlug == null) return;
+
+            Activity activity = findActivity(ctx);
+            if (activity == null || activity.getWindow() == null) return;
+
+            View root = activity.getWindow().getDecorView();
+            refreshInViewTree(root, filmSlug, newUrl);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static void refreshInViewTree(View view, String filmSlug, String newUrl) {
+        try {
+            if (view == null) return;
+
+            if (view.getClass().getName()
+                    .equals("com.letterboxd.letterboxd.ui.views.PosterView")) {
+                Method getFilmSummary = view.getClass().getMethod("getFilmSummary");
+                Object filmSummary = getFilmSummary.invoke(view);
+                if (filmSummary != null) {
+                    Method getId = filmSummary.getClass().getMethod("getId");
+                    Object id = getId.invoke(filmSummary);
+                    if (id != null && filmSlug.equals(id.toString())) {
+                        Method setImageURL = view.getClass()
+                                .getMethod("setImageURL", URL.class);
+                        if (newUrl == null || newUrl.isEmpty()) {
+                            // Reset: call setImageURL(null) which clears + hides the image.
+                            // The next natural render (screen re-entry or scroll) will
+                            // re-populate from the server because our override is gone.
+                            setImageURL.invoke(view, new Object[]{null});
+                        } else {
+                            setImageURL.invoke(view, new URL(newUrl));
+                        }
+                        // Don't return — a film page can have multiple PosterViews in
+                        // different scroll containers. Refresh them all.
+                    }
+                }
+            }
+
+            if (view instanceof ViewGroup) {
+                ViewGroup group = (ViewGroup) view;
+                for (int i = 0; i < group.getChildCount(); i++) {
+                    refreshInViewTree(group.getChildAt(i), filmSlug, newUrl);
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static Activity findActivity(Context ctx) {
+        try {
+            if (ctx instanceof Activity) return (Activity) ctx;
+            if (ctx instanceof ContextWrapper) {
+                Context c = ctx;
+                while (c instanceof ContextWrapper) {
+                    if (c instanceof Activity) return (Activity) c;
+                    c = ((ContextWrapper) c).getBaseContext();
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return null;
+    }
+
     // --- internal: open picker ------------------------------------------
 
     private static void openPickerForFragment(Object fragment) {
@@ -155,7 +234,8 @@ public final class CustomPosterButton {
             CustomPosterDialog dialog = new CustomPosterDialog(ctx, slug, imdbId,
                     new CustomPosterDialog.OnChange() {
                         @Override public void onChange(String newUrl) {
-                            // Poster redraws on next render.
+                            // No-op — the picker already triggers refreshVisiblePoster
+                            // directly, so this callback isn't needed for display.
                         }
                     });
             dialog.show();
@@ -214,11 +294,7 @@ public final class CustomPosterButton {
 
     // --- cache buster ---------------------------------------------------
 
-    /**
-     * Marks the class as changed so Gradle's incremental compiler cannot reuse a previously
-     * built {@code extension.mpe}. Called from nowhere; presence is the point.
-     */
-    public static void __cacheBustV3() {
+    public static void __cacheBustV4() {
         // intentionally empty
     }
 }

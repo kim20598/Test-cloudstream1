@@ -2,6 +2,7 @@ package app.template.patches.letterboxd
 
 import app.morphe.patcher.Fingerprint
 import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
+import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.bytecodePatch
 import app.template.patches.shared.Constants.COMPATIBILITY_LETTERBOXD
 import com.android.tools.smali.dexlib2.AccessFlags
@@ -12,6 +13,8 @@ private const val IMAGE =
     "Lcom/letterboxd/api/model/Image;"
 private const val FILM_ACTIONS_FRAGMENT =
     "Lcom/letterboxd/letterboxd/ui/fragments/film/FilmActionsFragment;"
+private const val SETTINGS_APP_ICON_FRAGMENT =
+    "Lcom/letterboxd/letterboxd/ui/fragments/user/SettingsAppIconFragment;"
 
 /**
  * `PosterView.setImage(Image, int, Function0)` — poster rendering. Prepends a check for a
@@ -27,8 +30,8 @@ internal object PosterViewSetImageFingerprint : Fingerprint(
 
 /**
  * `FilmActionsFragment.onViewCreated(View, Bundle)` — runs once when the sheet is created.
- * We append a call that injects our "Custom poster" row into the action list, right under
- * "Change poster / backdrop". Native-looking, no dialog overlay on top of the sheet.
+ * We prepend a call that injects our "Custom poster" row into the action list, right under
+ * "Change poster / backdrop".
  */
 internal object FilmActionsOnViewCreatedFingerprint : Fingerprint(
     definingClass = FILM_ACTIONS_FRAGMENT,
@@ -41,20 +44,35 @@ internal object FilmActionsOnViewCreatedFingerprint : Fingerprint(
     ),
 )
 
+/**
+ * `SettingsAppIconFragment.getCanChangeAppIcon()` — private, returns whether the user is
+ * allowed to pick a Pro-exclusive app icon. The click handler in the same class checks this
+ * and, when false, routes Pro icons to the Upgrade screen instead of the confirmation dialog.
+ *
+ * Forcing it to `true` makes every icon behave like a free one: tap → confirmation dialog →
+ * change. The icon swap is entirely local (a manifest activity-alias toggle) so it truly works.
+ */
+internal object SettingsAppIconCanChangeFingerprint : Fingerprint(
+    definingClass = SETTINGS_APP_ICON_FRAGMENT,
+    name = "getCanChangeAppIcon",
+    accessFlags = listOf(AccessFlags.PRIVATE, AccessFlags.FINAL),
+    returnType = "Z",
+    parameters = listOf(),
+)
+
 @Suppress("unused")
 val customPosterPatch = bytecodePatch(
     name = "Custom poster (local)",
     description = "Adds a \"Custom poster\" row under the existing Change poster button on a " +
-        "film's action sheet. Pick a poster from TMDB or paste any image URL, and it will be " +
-        "used on your device for that film — saved locally and included in Mod settings " +
-        "export/import. Works on every film regardless of Patron tier.",
+        "film's action sheet, plus unlocks all Pro app icons (which are a local toggle). Pick " +
+        "a poster from TMDB or paste any image URL — saved locally and included in Mod " +
+        "settings export/import. Works on every film regardless of Patron tier.",
     default = false,
 ) {
     compatibleWith(COMPATIBILITY_LETTERBOXD)
 
     execute {
-        // 1. Poster override — PosterView.setImage(Image, int, Function0). .registers 6,
-        //    3 params, p0 = v3.
+        // 1. Poster override — PosterView.setImage(Image, int, Function0). p0 = v3.
         PosterViewSetImageFingerprint.method.apply {
             addInstruction(
                 0,
@@ -62,13 +80,24 @@ val customPosterPatch = bytecodePatch(
             )
         }
 
-        // 2. Row injection — FilmActionsFragment.onViewCreated(View, Bundle). 2 params,
-        //    p0 = the fragment. Prepends a call that walks the fragment's binding and
-        //    inserts our row into userButtonsView, right after buttonChangePoster.
+        // 2. Row injection — FilmActionsFragment.onViewCreated(View, Bundle). p0 = fragment.
         FilmActionsOnViewCreatedFingerprint.method.apply {
             addInstruction(
                 0,
                 "invoke-static {p0}, Lapp/template/extension/settings/CustomPosterButton;->injectRow(Ljava/lang/Object;)V",
+            )
+        }
+
+        // 3. App icon unlock — SettingsAppIconFragment.getCanChangeAppIcon()Z. Force return
+        //    true. The original body reads a Lazy boolean; we prepend an unconditional
+        //    `return true` so the rest never runs.
+        SettingsAppIconCanChangeFingerprint.method.apply {
+            addInstructions(
+                0,
+                """
+                    const/4 v0, 0x1
+                    return v0
+                """.trimIndent(),
             )
         }
     }

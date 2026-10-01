@@ -13,11 +13,17 @@ import java.util.Map;
  * dialog's seen-version. Import merges: a recognised key in the file is written, everything else
  * is left alone, so a config from an older build can't wipe newer settings. Values are sanity-
  * checked; a bad one is skipped rather than aborting the whole import.
+ *
+ * <p>Custom poster overrides live under a separate top-level key ({@code customPosters}) as a
+ * JSON map of filmSlug -> posterUrl. They don't go through {@link #KEYS} because there can be
+ * arbitrarily many of them and their values are URLs, not fixed enums. The map is written whole
+ * on export and replaced whole on import.
  */
 public final class ConfigTransfer {
 
     public static final int FORMAT = 1;
     private static final String APP = "letterboxd-morphe-patches";
+    private static final String KEY_CUSTOM_POSTERS_ROOT = "customPosters";
 
     private static final boolean STR = false;
     private static final boolean BOOL = true;
@@ -45,6 +51,9 @@ public final class ConfigTransfer {
         KEYS.put(Prefs.KEY_HIDE_RATINGS_ANIMATION, STR);
         KEYS.put(Prefs.KEY_HIDE_RATINGS_CONFETTI_COLOR, STR);
         KEYS.put(Prefs.KEY_HIDE_RATINGS_HAPTIC, BOOL);
+        // Note: KEY_TMDB_API_KEY is deliberately NOT in this list. It's a user-specific
+        // credential (their personal API key), not a shareable setting. Exporting it into a
+        // config file someone posts publicly would leak it.
     }
 
     private ConfigTransfer() {}
@@ -64,10 +73,22 @@ public final class ConfigTransfer {
                     settings.put(key, Prefs.getString(key, ""));
                 }
             }
+
             JSONObject root = new JSONObject();
             root.put("format", FORMAT);
             root.put("app", APP);
             root.put("settings", settings);
+
+            // Custom poster overrides — a map of slug -> URL. Only include the key if there's
+            // at least one entry, so an empty config stays byte-identical to older exports.
+            try {
+                JSONObject posters = CustomPosterStore.snapshot();
+                if (posters != null && posters.length() > 0) {
+                    root.put(KEY_CUSTOM_POSTERS_ROOT, posters);
+                }
+            } catch (Throwable ignored) {
+            }
+
             return root.toString(2);
         } catch (Throwable t) {
             return "{\"format\":" + FORMAT + ",\"app\":\"" + APP + "\",\"settings\":{}}";
@@ -80,11 +101,14 @@ public final class ConfigTransfer {
     public static int importJson(Context ctx, String text) {
         Prefs.load(ctx);
         JSONObject settings;
+        JSONObject posters = null;
         try {
             JSONObject root = new JSONObject(text);
             if (root.optInt("format", 0) != FORMAT) return -1;
             settings = root.optJSONObject("settings");
             if (settings == null) return -1;
+            // Optional — an older config without custom posters is still valid.
+            posters = root.optJSONObject(KEY_CUSTOM_POSTERS_ROOT);
         } catch (Throwable t) {
             return -1;
         }
@@ -108,6 +132,19 @@ public final class ConfigTransfer {
             } catch (Throwable ignored) {
             }
         }
+
+        // Custom poster overrides — replace the whole map on import (merge is meaningless here:
+        // we don't have an obvious "which wins" rule, and a user re-importing a config expects
+        // exactly what they exported). Count each slug as an applied "setting" so the toast
+        // reports something meaningful.
+        try {
+            if (posters != null) {
+                CustomPosterStore.replaceAll(posters);
+                applied += posters.length();
+            }
+        } catch (Throwable ignored) {
+        }
+
         return applied;
     }
 
@@ -115,13 +152,18 @@ public final class ConfigTransfer {
     private static boolean validString(String key, String v) {
         switch (key) {
             case Prefs.KEY_THEME_SURFACE:
-                return v.isEmpty() || v.equals("stock") || v.equals("oled");
+                // New themes (purple, midnight) added; keep backward compat with old exports.
+                return v.isEmpty()
+                        || v.equals("stock")
+                        || v.equals("oled")
+                        || v.equals("purple")
+                        || v.equals("midnight");
             case Prefs.KEY_NAV_INDICATOR:
                 return oneOf(v, "stock", "nopill", "white", "accent", "accentPill");
             case Prefs.KEY_LAUNCH_TAB:
                 return oneOf(v, "last", "popular", "search", "activity", "watchlist", "profile");
             case Prefs.KEY_STREAMING_APP:
-                return oneOf(v, "stremio", "nuvio");
+                return oneOf(v, "stremio", "nuvio", "cloudstream");
             case Prefs.KEY_HIDE_RATINGS_STYLE:
                 return oneOf(v, "panel", "link", "shimmer", "burst");
             case Prefs.KEY_HIDE_RATINGS_ANIMATION:

@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-01T13:57:30",
-  "description": "## [2.12.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.11.6...v2.12.0) (2026-10-01)\n\n### ✨ New Features\n\n* inject custom poster row natively into film action sheet ([c84e251](https://github.com/kim20598/Test-cloudstream1/commit/c84e2512302761e836b2885749a9f61302204cc2))",
-  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.12.0/patches-2.12.0.mpp",
+  "created_at": "2026-10-01T14:19:45",
+  "description": "## [2.12.1](https://github.com/kim20598/Test-cloudstream1/compare/v2.12.0...v2.12.1) (2026-10-01)\n\n### 🐛 Bug Fixes\n\n* refresh visible poster instantly on override change ([06c1dd0](https://github.com/kim20598/Test-cloudstream1/commit/06c1dd04f7082d55b1437aeff78f50770b92b875))",
+  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.12.1/patches-2.12.1.mpp",
   "signature_download_url": "",
-  "version": "2.12.0"
+  "version": "2.12.1"
 }

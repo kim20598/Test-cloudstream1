@@ -1,3 +1,9 @@
+## [2.12.1](https://github.com/kim20598/Test-cloudstream1/compare/v2.12.0...v2.12.1) (2026-10-01)
+
+### 🐛 Bug Fixes
+
+* refresh visible poster instantly on override change ([06c1dd0](https://github.com/kim20598/Test-cloudstream1/commit/06c1dd04f7082d55b1437aeff78f50770b92b875))
+
 ## [2.12.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.11.6...v2.12.0) (2026-10-01)
 
 ### ✨ New Features

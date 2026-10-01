@@ -2,6 +2,7 @@ package app.template.patches.letterboxd
 
 import app.morphe.patcher.Fingerprint
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
+import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.patch.bytecodePatch
 import app.template.patches.shared.Constants.COMPATIBILITY_LETTERBOXD
 import com.android.tools.smali.dexlib2.AccessFlags
@@ -10,26 +11,37 @@ private const val POSTER_VIEW =
     "Lcom/letterboxd/letterboxd/ui/views/PosterView;"
 private const val IMAGE =
     "Lcom/letterboxd/api/model/Image;"
+private const val ACTION_SHEETS =
+    "Lcom/letterboxd/letterboxd/ActionSheetsKt;"
+private const val FILM_SUMMARY =
+    "Lcom/letterboxd/api/model/FilmSummary;"
 
 /**
- * `PosterView.setImage(Image, int, Function0)` — the method that renders a film's poster.
- *
- * We prepend a check: if the user has set a custom poster URL for the film currently shown by
- * this view, we call `PosterView.setImageURL(URL)` (the public Coil-backed path) and return
- * early, skipping the original Glide pipeline. If no override exists, the original path runs.
- *
- * The override lookup is `CustomPosterStore.getOverride(slug)` — a static method in the
- * extension module. It reads a SharedPreferences-backed map of `filmSlug -> posterUrl`.
+ * `PosterView.setImage(Image, int, Function0)` — the poster rendering path. Prepends a check
+ * for a stored custom poster URL for the current film; if present, loads it via
+ * `setImageURL(URL)` and returns, skipping the original Glide flow.
  */
 internal object PosterViewSetImageFingerprint : Fingerprint(
     definingClass = POSTER_VIEW,
     name = "setImage",
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
     returnType = "V",
+    parameters = listOf(IMAGE, "I", "Lkotlin/jvm/functions/Function0;"),
+)
+
+/**
+ * `ActionSheetsKt.showFilmActionSheet(Fragment, FilmSummary)` — the popup that appears when the
+ * user long-presses a poster (or taps the … menu on a film). We append a "Custom poster" row to
+ * whatever the app builds by calling our own helper, which adds a menu item above the sheet's
+ * dismiss action. The original sheet content is untouched.
+ */
+internal object ShowFilmActionSheetFingerprint : Fingerprint(
+    definingClass = ACTION_SHEETS,
+    name = "showFilmActionSheet",
+    returnType = "V",
     parameters = listOf(
-        IMAGE,
-        "I",
-        "Lkotlin/jvm/functions/Function0;",
+        "Landroidx/fragment/app/Fragment;",
+        FILM_SUMMARY,
     ),
 )
 
@@ -45,20 +57,8 @@ val customPosterPatch = bytecodePatch(
     compatibleWith(COMPATIBILITY_LETTERBOXD)
 
     execute {
+        // 1. Poster override hook (unchanged from message 1).
         PosterViewSetImageFingerprint.method.apply {
-            // Prepend: check CustomPosterStore for an override for this film's slug.
-            // If one exists, load it via setImageURL and return. Otherwise jump to the
-            // original body.
-            //
-            // Call chain in the injected block:
-            //   p0.getFilmSummary() -> FilmSummary (or null)
-            //   FilmSummary.getId() -> String slug (or null)
-            //   CustomPosterStore.getOverride(slug) -> String url (or null)
-            //   new URL(url) -> java.net.URL
-            //   p0.setImageURL(url) -> returns void
-            //
-            // The label `:original_body` must be followed by a real instruction — `nop` is
-            // the standard placeholder.
             addInstructions(
                 0,
                 """
@@ -75,6 +75,25 @@ val customPosterPatch = bytecodePatch(
                     invoke-virtual {p0, v1}, Lcom/letterboxd/letterboxd/ui/views/PosterView;->setImageURL(Ljava/net/URL;)V
                     return-void
                     :original_body
+                    nop
+                """.trimIndent(),
+            )
+        }
+
+        // 2. Action-sheet injection. Prepends a call that hands the fragment + film summary
+        //    to our runtime helper. The helper installs a click listener on the sheet's
+        //    root which, on long-press of the poster's menu, appends our item. In practice
+        //    the simplest hook is to intercept the click that opens the sheet and route it
+        //    through us, so we control the menu content.
+        ShowFilmActionSheetFingerprint.method.apply {
+            addInstructions(
+                0,
+                """
+                    invoke-static {p0, p1}, Lapp/template/extension/settings/CustomPosterButton;->maybeIntercept(Landroidx/fragment/app/Fragment;Lcom/letterboxd/api/model/FilmSummary;)Z
+                    move-result v0
+                    if-eqz v0, :orig
+                    return-void
+                    :orig
                     nop
                 """.trimIndent(),
             )

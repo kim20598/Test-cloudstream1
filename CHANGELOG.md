@@ -1,3 +1,9 @@
+## [2.11.3](https://github.com/kim20598/Test-cloudstream1/compare/v2.11.2...v2.11.3) (2026-10-01)
+
+### 🐛 Bug Fixes
+
+* use v-register numbers in injected hooks instead of p aliases ([de84fe7](https://github.com/kim20598/Test-cloudstream1/commit/de84fe76c942291cfa0f12129167cd3975c007b2))
+
 ## [2.11.2](https://github.com/kim20598/Test-cloudstream1/compare/v2.11.1...v2.11.2) (2026-10-01)
 
 ### 🐛 Bug Fixes

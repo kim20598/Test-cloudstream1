@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-01T11:31:32",
-  "description": "## [2.11.2](https://github.com/kim20598/Test-cloudstream1/compare/v2.11.1...v2.11.2) (2026-10-01)\n\n### 🐛 Bug Fixes\n\n* make custom poster entry point fire-and-forget to prevent crash ([52e989f](https://github.com/kim20598/Test-cloudstream1/commit/52e989f6953bbe322c7be2eb24292639c5e0d9be))",
-  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.11.2/patches-2.11.2.mpp",
+  "created_at": "2026-10-01T11:49:29",
+  "description": "## [2.11.3](https://github.com/kim20598/Test-cloudstream1/compare/v2.11.2...v2.11.3) (2026-10-01)\n\n### 🐛 Bug Fixes\n\n* use v-register numbers in injected hooks instead of p aliases ([de84fe7](https://github.com/kim20598/Test-cloudstream1/commit/de84fe76c942291cfa0f12129167cd3975c007b2))",
+  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.11.3/patches-2.11.3.mpp",
   "signature_download_url": "",
-  "version": "2.11.2"
+  "version": "2.11.3"
 }

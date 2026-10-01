@@ -7,28 +7,22 @@ import app.template.patches.shared.Constants.COMPATIBILITY_LETTERBOXD
 import com.android.tools.smali.dexlib2.AccessFlags
 
 private const val MEMBER = "Lcom/letterboxd/api/model/Member;"
+private const val MEMBER_STATUS = "Lcom/letterboxd/api/model/MemberStatus;"
 
 /**
- * `Member.getMemberStatus()` — the getter used for the logged-in user's own profile.
- *
- * Scoped to `Member` (not `MemberSummary`) on purpose: `MemberSummary` is used for *other* users
- * in lists and feeds, and forcing those to `Patron` breaks view-model code that expects otherwise.
+ * `Member.setMemberStatus(MemberStatus)` — the Kotlin-generated setter for the `memberStatus`
+ * property. Forcing the stored field (rather than the getter) keeps JSON serialization
+ * consistent: whatever the server sent gets overwritten with `Patron` at the moment it's
+ * decoded, so every subsequent getter call returns the real stored value.
  */
-internal object MemberGetMemberStatusFingerprint : Fingerprint(
+internal object MemberSetMemberStatusFingerprint : Fingerprint(
     definingClass = MEMBER,
-    name = "getMemberStatus",
+    name = "setMemberStatus",
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
-    returnType = "Lcom/letterboxd/api/model/MemberStatus;",
-    parameters = listOf(),
+    returnType = "V",
+    parameters = listOf(MEMBER_STATUS),
 )
 
-/**
- * Forces the current user's `MemberStatus` to `Patron` locally, so Patron-only UI (poster and
- * backdrop pickers, etc.) appears without the account actually being a Patron.
- *
- * Local-only. Server-validated actions (saving a poster, stats data, push notifications) still
- * see a non-Patron account.
- */
 @Suppress("unused")
 val unlockPatronPatch = bytecodePatch(
     name = "Force Patron (local)",
@@ -41,13 +35,20 @@ val unlockPatronPatch = bytecodePatch(
     compatibleWith(COMPATIBILITY_LETTERBOXD)
 
     execute {
-        MemberGetMemberStatusFingerprint.method.apply {
-            // Replace the first instruction (iget-object, reading the memberStatus field) with
-            // sget-object fetching MemberStatus.Patron. The trailing `return-object v0` is left
-            // in place, so the method now unconditionally returns Patron.
+        MemberSetMemberStatusFingerprint.method.apply {
+            // Replace the setter body so the field is always written as Patron, regardless of
+            // what the server's JSON decoded to.
             replaceInstruction(
                 0,
-                "sget-object v0, Lcom/letterboxd/api/model/MemberStatus;->Patron:Lcom/letterboxd/api/model/MemberStatus;",
+                "sget-object p1, $MEMBER_STATUS->Patron:$MEMBER_STATUS",
+            )
+            replaceInstruction(
+                1,
+                "iput-object p1, p0, $MEMBER->memberStatus:$MEMBER_STATUS",
+            )
+            replaceInstruction(
+                2,
+                "return-void",
             )
         }
     }

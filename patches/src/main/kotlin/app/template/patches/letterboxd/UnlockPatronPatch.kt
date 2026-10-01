@@ -1,54 +1,55 @@
 package app.template.patches.letterboxd
 
 import app.morphe.patcher.Fingerprint
-import app.morphe.patcher.extensions.InstructionExtensions.replaceInstruction
+import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.bytecodePatch
 import app.template.patches.shared.Constants.COMPATIBILITY_LETTERBOXD
 import com.android.tools.smali.dexlib2.AccessFlags
 
-private const val MEMBER = "Lcom/letterboxd/api/model/Member;"
-private const val MEMBER_STATUS = "Lcom/letterboxd/api/model/MemberStatus;"
+private const val COMPANION =
+    "Lcom/letterboxd/api/model/MemberStatus\$Companion;"
+private const val MEMBER_STATUS =
+    "Lcom/letterboxd/api/model/MemberStatus;"
 
 /**
- * `Member.setMemberStatus(MemberStatus)` — the Kotlin-generated setter for the `memberStatus`
- * property. Forcing the stored field (rather than the getter) keeps JSON serialization
- * consistent: whatever the server sent gets overwritten with `Patron` at the moment it's
- * decoded, so every subsequent getter call returns the real stored value.
+ * `MemberStatus.Companion.valueOf(String)` — the string → enum parser Kotlin serialization
+ * runs on every server response that carries a `memberStatus` field.
+ *
+ * Forcing this method to return `Patron` makes the enum stored on the `Member` object genuinely
+ * `Patron`, so the getter, the serializer, and everything downstream read the same value. (The
+ * earlier getter hook broke the serialization round-trip — the field said `Member` but reads
+ * claimed `Patron`. The setter hook didn't work because `memberStatus` is a `val`. This parser
+ * is the only point where the value is set exactly once and safely.)
  */
-internal object MemberSetMemberStatusFingerprint : Fingerprint(
-    definingClass = MEMBER,
-    name = "setMemberStatus",
+internal object MemberStatusValueOfFingerprint : Fingerprint(
+    definingClass = COMPANION,
+    name = "valueOf",
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
-    returnType = "V",
-    parameters = listOf(MEMBER_STATUS),
+    returnType = MEMBER_STATUS,
+    parameters = listOf("Ljava/lang/String;"),
 )
 
 @Suppress("unused")
 val unlockPatronPatch = bytecodePatch(
     name = "Force Patron (local)",
     description = "Makes the app treat your own account as Patron locally, so Patron-only " +
-        "screens and pickers appear. Purely cosmetic — the server still knows the real tier, so " +
-        "anything that saves (posters, backdrops) or fetches Patron-only data will not actually " +
-        "work. Off by default.",
+        "screens and pickers appear. Purely cosmetic — the server still knows the real tier, " +
+        "so anything that saves (posters, backdrops) or fetches Patron-only data will not " +
+        "actually work. Off by default.",
     default = false,
 ) {
     compatibleWith(COMPATIBILITY_LETTERBOXD)
 
     execute {
-        MemberSetMemberStatusFingerprint.method.apply {
-            // Replace the setter body so the field is always written as Patron, regardless of
-            // what the server's JSON decoded to.
-            replaceInstruction(
+        MemberStatusValueOfFingerprint.method.apply {
+            // Prepend: immediately return Patron, ignoring the input string. The rest of the
+            // original method becomes unreachable dead code — Dalvik tolerates that fine.
+            addInstructions(
                 0,
-                "sget-object p1, $MEMBER_STATUS->Patron:$MEMBER_STATUS",
-            )
-            replaceInstruction(
-                1,
-                "iput-object p1, p0, $MEMBER->memberStatus:$MEMBER_STATUS",
-            )
-            replaceInstruction(
-                2,
-                "return-void",
+                """
+                    sget-object p1, $MEMBER_STATUS->Patron:$MEMBER_STATUS
+                    return-object p1
+                """.trimIndent(),
             )
         }
     }

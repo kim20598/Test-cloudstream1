@@ -1,3 +1,9 @@
+## [2.16.2](https://github.com/kim20598/Test-cloudstream1/compare/v2.16.1...v2.16.2) (2026-10-01)
+
+### 🐛 Bug Fixes
+
+* include profile backdrop in export/import ([999c050](https://github.com/kim20598/Test-cloudstream1/commit/999c050fe547175f993723505131e0e08314f993))
+
 ## [2.16.1](https://github.com/kim20598/Test-cloudstream1/compare/v2.16.0...v2.16.1) (2026-10-01)
 
 ### 🐛 Bug Fixes

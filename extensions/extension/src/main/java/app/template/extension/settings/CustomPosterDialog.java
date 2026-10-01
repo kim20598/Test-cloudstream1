@@ -5,12 +5,9 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
-import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.Editable;
 import android.text.TextUtils;
-import android.text.TextWatcher;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
@@ -18,7 +15,6 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
-import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -31,15 +27,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * "Custom poster" picker — shown from the film action sheet.
+ * "Custom poster" picker — shown from the action sheet's "Custom poster" row.
  *
  * <p>Layout: header with title + reset button; a grid of poster thumbnails fetched from TMDB
- * (by the film's IMDb id); a paste-URL input at the bottom for anything TMDB doesn't have; a
- * "Use this URL" button next to it.
+ * (by the film's IMDb id); a paste-URL input at the bottom for anything TMDB doesn't have.
  *
- * <p>Requires the film's slug (used as the storage key) and its IMDb id (used for the TMDB
- * lookup). If TMDB isn't configured, or the fetch returns nothing, the grid area shows a hint
- * and the paste-URL input becomes the primary path — still functional.
+ * <p>When the user picks a poster (either from the grid or via the URL field), the picker
+ * saves the override AND immediately asks {@link CustomPosterButton#refreshVisiblePoster} to
+ * reload every visible {@code PosterView} for this film. That's what makes the swap instant —
+ * no fragment reload, no waiting.
  */
 final class CustomPosterDialog extends Dialog {
 
@@ -109,6 +105,9 @@ final class CustomPosterDialog extends Dialog {
         reset.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
                 CustomPosterStore.clearOverride(filmSlug);
+                // Immediately clear the visible poster. The next natural render will
+                // repopulate from the server because the override is gone.
+                CustomPosterButton.refreshVisiblePoster(ctx, filmSlug, null);
                 if (onChange != null) onChange.onChange(null);
                 toast("Poster reset");
                 dismiss();
@@ -192,7 +191,8 @@ final class CustomPosterDialog extends Dialog {
         useUrl.setBackground(useBg);
         useUrl.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
-                String url = urlInput.getText() != null ? urlInput.getText().toString().trim() : "";
+                String url = urlInput.getText() != null
+                        ? urlInput.getText().toString().trim() : "";
                 if (TextUtils.isEmpty(url) || !isProbablyUrl(url)) {
                     toast("Enter a full image URL");
                     return;
@@ -242,7 +242,6 @@ final class CustomPosterDialog extends Dialog {
 
     private void populateGrid(List<String> urls) {
         gridContainer.removeAllViews();
-        // Three per row. Manual rows because GridLayout is fussy on older Android.
         int perRow = 3;
         int gap = dp(8);
         int available = ctx.getResources().getDisplayMetrics().widthPixels - dp(64);
@@ -254,7 +253,8 @@ final class CustomPosterDialog extends Dialog {
                 row = new LinearLayout(ctx);
                 row.setOrientation(LinearLayout.HORIZONTAL);
                 LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
                 rowLp.bottomMargin = gap;
                 gridContainer.addView(row, rowLp);
             }
@@ -262,13 +262,12 @@ final class CustomPosterDialog extends Dialog {
             final String url = urls.get(i);
             ImageView iv = new ImageView(ctx);
             iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(cellSize, (int)(cellSize * 1.5));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    cellSize, (int) (cellSize * 1.5));
             lp.rightMargin = (i % perRow == perRow - 1) ? 0 : gap;
             iv.setLayoutParams(lp);
             iv.setBackgroundColor(0xFF1C1C1C);
 
-            // Load thumbnail with Coil if available (Letterboxd uses Coil). Fall back to
-            // Glide, then to a plain background if neither is reachable at runtime.
             CoilLoader.load(ctx, url, iv);
 
             iv.setOnClickListener(new View.OnClickListener() {
@@ -285,6 +284,9 @@ final class CustomPosterDialog extends Dialog {
 
     private void applyUrl(String url) {
         CustomPosterStore.setOverride(filmSlug, url);
+        // Immediately swap every visible PosterView for this film. This is what makes the
+        // change instant — no leaving and returning, no fragment re-creation.
+        CustomPosterButton.refreshVisiblePoster(ctx, filmSlug, url);
         if (onChange != null) onChange.onChange(url);
         toast("Poster saved");
         dismiss();

@@ -1,3 +1,9 @@
+## [2.11.5](https://github.com/kim20598/Test-cloudstream1/compare/v2.11.4...v2.11.5) (2026-10-01)
+
+### 🐛 Bug Fixes
+
+* bust gradle cache to force fresh extension.mpe build ([b70b616](https://github.com/kim20598/Test-cloudstream1/commit/b70b6162e666bc28d1d7faeb81db76a3766f407b))
+
 ## [2.11.4](https://github.com/kim20598/Test-cloudstream1/compare/v2.11.3...v2.11.4) (2026-10-01)
 
 ### 🐛 Bug Fixes

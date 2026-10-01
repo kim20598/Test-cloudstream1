@@ -11,16 +11,7 @@ import java.util.List;
 /**
  * Local store of `filmSlug -> imageUrl` overrides for the "Custom poster" patch.
  *
- * <p>Posters and backdrops are stored in two separate JSON maps under two SharedPreferences
- * keys, so clearing one doesn't wipe the other:
- *
- * <ul>
- *   <li>{@link Prefs#KEY_CUSTOM_POSTERS} — {@code {"memento-2000":"https://..."}}</li>
- *   <li>{@link Prefs#KEY_CUSTOM_BACKDROPS} — same shape, separate key</li>
- * </ul>
- *
- * <p>Reads happen from the hot path in the injected hooks (PosterView / FilmHeaderFragment),
- * so lookups must be cheap and null-safe. Writes are user-driven.
+ * <p>Posters and backdrops are two separate JSON maps under two SharedPreferences keys.
  */
 public final class CustomPosterStore {
 
@@ -90,7 +81,7 @@ public final class CustomPosterStore {
         replaceMap(Prefs.KEY_CUSTOM_BACKDROPS, map);
     }
 
-    // --- shared internals -----------------------------------------------
+    // --- shared ---------------------------------------------------------
 
     private static String getFromMap(String prefsKey, String filmSlug) {
         if (filmSlug == null || filmSlug.isEmpty()) return null;
@@ -109,14 +100,10 @@ public final class CustomPosterStore {
         try {
             JSONObject map = readMap(prefsKey);
             if (map == null) map = new JSONObject();
-            if (url == null || url.isEmpty()) {
-                map.remove(filmSlug);
-            } else {
-                map.put(filmSlug, url);
-            }
+            if (url == null || url.isEmpty()) map.remove(filmSlug);
+            else map.put(filmSlug, url);
             Prefs.putString(prefsKey, map.toString());
-        } catch (Throwable ignored) {
-        }
+        } catch (Throwable ignored) {}
     }
 
     private static List<String> listKeys(String prefsKey) {
@@ -144,8 +131,7 @@ public final class CustomPosterStore {
     private static void replaceMap(String prefsKey, JSONObject map) {
         try {
             Prefs.putString(prefsKey, map == null ? "{}" : map.toString());
-        } catch (Throwable ignored) {
-        }
+        } catch (Throwable ignored) {}
     }
 
     private static int countEntries(String prefsKey) {

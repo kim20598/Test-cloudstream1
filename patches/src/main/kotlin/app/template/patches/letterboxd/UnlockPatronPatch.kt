@@ -10,16 +10,16 @@ private const val COMPANION =
     "Lcom/letterboxd/api/model/MemberStatus\$Companion;"
 private const val MEMBER_STATUS =
     "Lcom/letterboxd/api/model/MemberStatus;"
+private const val PATRON =
+    "Lcom/letterboxd/api/model/MemberStatus\$Patron;"
 
 /**
  * `MemberStatus.Companion.valueOf(String)` — the string → enum parser Kotlin serialization
  * runs on every server response that carries a `memberStatus` field.
  *
- * Forcing this method to return `Patron` makes the enum stored on the `Member` object genuinely
- * `Patron`, so the getter, the serializer, and everything downstream read the same value. (The
- * earlier getter hook broke the serialization round-trip — the field said `Member` but reads
- * claimed `Patron`. The setter hook didn't work because `memberStatus` is a `val`. This parser
- * is the only point where the value is set exactly once and safely.)
+ * Note: Kotlin enums don't expose the constants as static fields on the outer enum class. Each
+ * case is its own nested class (e.g. `MemberStatus$Patron`) with a singleton `INSTANCE` field.
+ * So we fetch `INSTANCE`, then cast it to `MemberStatus`.
  */
 internal object MemberStatusValueOfFingerprint : Fingerprint(
     definingClass = COMPANION,
@@ -42,12 +42,14 @@ val unlockPatronPatch = bytecodePatch(
 
     execute {
         MemberStatusValueOfFingerprint.method.apply {
-            // Prepend: immediately return Patron, ignoring the input string. The rest of the
-            // original method becomes unreachable dead code — Dalvik tolerates that fine.
+            // Prepend: return MemberStatus.Patron immediately, ignoring the input string.
+            // The enum constant is fetched from its nested singleton INSTANCE field, then
+            // cast to the outer MemberStatus type — that's how Kotlin generates enum access.
             addInstructions(
                 0,
                 """
-                    sget-object p1, $MEMBER_STATUS->Patron:$MEMBER_STATUS
+                    sget-object p1, $PATRON->INSTANCE:$PATRON
+                    check-cast p1, $MEMBER_STATUS
                     return-object p1
                 """.trimIndent(),
             )

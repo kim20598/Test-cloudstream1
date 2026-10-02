@@ -1,10 +1,10 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "2.19.0",
+  "version": "2.20.0",
   "patches": [
     {
       "name": "AMOLED (baked in)",
-      "description": "Bakes a true-black AMOLED theme into Busuu at patch time by darkening every dark surface in its night-mode palette. Works on every Android version. Changing it later requires re-patching.",
+      "description": "Bakes a true-black AMOLED theme into Busuu at patch time by darkening every dark surface in its night-mode palette and forcing the system navigation bar black. Works on every Android version. Changing it later requires re-patching.",
       "default": false,
       "dependencies": [],
       "compatiblePackages": [

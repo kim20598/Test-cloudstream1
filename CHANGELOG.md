@@ -1,3 +1,9 @@
+## [2.20.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.19.0...v2.20.0) (2026-10-02)
+
+### ✨ New Features
+
+* force system navigation bar black in Busuu AMOLED patch ([b68d846](https://github.com/kim20598/Test-cloudstream1/commit/b68d846fcd2616f02f8c5a9c20b8cbbbcfb2c2ef))
+
 ## [2.19.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.18.1...v2.19.0) (2026-10-02)
 
 ### ✨ New Features

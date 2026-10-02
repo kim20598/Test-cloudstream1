@@ -16,23 +16,14 @@ import org.w3c.dom.Element
  * (#FF0A0A0A / #FF0F0F0F / #FF1A1A1A) so an OLED screen saves power and the
  * theme reads as genuine AMOLED instead of dark grey.
  *
- * Only the night colours are written to. The day file is left alone so light
- * mode is untouched — patching the day values with black would break every
- * screen in light mode.
+ * Only the night colours are written to for the palette. The day file receives
+ * only the `morphe_baked_theme` marker so a future in-app Mod settings screen
+ * can detect that a baked theme is active — same pattern as the Letterboxd
+ * "Theme (baked in)" patch.
  *
  * Text colours, icon tints, accents, and the Material timepicker widget's
  * resources are deliberately not touched: those need to stay light-on-dark for
  * legibility, and the timepicker draws itself via theme attributes, not hex.
- *
- * This is a `resourcePatch`, so it has no relationship to the bytecode side of
- * the Busuu patches (EnablePremium.kt) and does not need `addInstructions` or
- * `returnEarly` — those live in the bytecode API surface.
- *
- * Two candidate paths are attempted because Morphe's patcher exposes the
- * qualifier-specific resource file at different virtual paths depending on how
- * it decoded the APK: usually `res/values-night/colors.xml`, sometimes
- * `resources/res/values-night/colors.xml`. Whichever resolves first is used;
- * if neither does, the patch fails loudly instead of silently no-op'ing.
  */
 @Suppress("unused")
 val busuuAmoledPatch = resourcePatch(
@@ -45,14 +36,38 @@ val busuuAmoledPatch = resourcePatch(
     compatibleWith(COMPATIBILITY_BUSUU)
 
     execute {
-        val candidates = listOf(
+        // Marker resource: presence of this colour tells the runtime code the build-time
+        // theme patch ran. Written to the day colours file, matching Letterboxd's pattern.
+        // `document(...)` on this path is safe — every Busuu version ships res/values/colors.xml.
+        document("res/values/colors.xml").use { document ->
+            val resources = document.documentElement
+                ?: throw PatchException("res/values/colors.xml has no root element")
+            if (!hasColor(document, "morphe_baked_theme")) {
+                resources.appendChild(
+                    document.createElement("color").apply {
+                        setAttribute("name", "morphe_baked_theme")
+                        textContent = "#FF000000"
+                    }
+                )
+            }
+        }
+
+        // The AMOLED palette is written only to the night colours file(s). Two candidate
+        // paths are attempted because Morphe's patcher exposes the qualifier-specific
+        // resource file at different virtual paths depending on how it decoded the APK:
+        // usually `res/values-night/colors.xml`, sometimes
+        // `resources/res/values-night/colors.xml`. Whichever resolves first is used.
+        //
+        // `get(...)` is a ResourcePatchContext method, only callable inside this `execute`
+        // block, which is why the existence check lives here instead of in a helper.
+        val palettePaths = listOf(
             "res/values-night/colors.xml",
             "resources/res/values-night/colors.xml",
         )
 
-        var wrote = false
+        var paletteWritten = false
 
-        for (path in candidates) {
+        for (path in palettePaths) {
             val exists = try {
                 get(path).isFile
             } catch (t: Throwable) {
@@ -63,30 +78,18 @@ val busuuAmoledPatch = resourcePatch(
             document(path).use { document ->
                 val resources = document.documentElement
                     ?: throw PatchException("$path has no root element")
-
                 BUSUU_AMOLED_NIGHT.forEach { (name, hex) ->
                     writeColorIfPresent(document, resources, name, hex)
                 }
-
-                // Marker resource so a future in-app Mod settings screen can detect that
-                // a baked theme is active. Mirrors the Letterboxd patch's `morphe_baked_theme`.
-                if (!hasColor(document, "morphe_baked_theme")) {
-                    resources.appendChild(
-                        document.createElement("color").apply {
-                            setAttribute("name", "morphe_baked_theme")
-                            textContent = "#FF000000"
-                        }
-                    )
-                }
             }
 
-            wrote = true
+            paletteWritten = true
         }
 
-        if (!wrote) {
+        if (!paletteWritten) {
             throw PatchException(
                 "No Busuu night colours file found at any known path " +
-                    "(tried: ${candidates.joinToString()})"
+                    "(tried: ${palettePaths.joinToString()})"
             )
         }
     }

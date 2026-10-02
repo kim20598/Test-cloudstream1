@@ -169,7 +169,7 @@ about your APK doesn't match.
 ## Patches
 
 <!-- PATCHES_START EXPANDED -->
-> **[v2.18.1](https://github.com/kim20598/Test-cloudstream1/releases/tag/v2.18.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;11 patches total
+> **[v2.19.0](https://github.com/kim20598/Test-cloudstream1/releases/tag/v2.19.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;11 patches total
 <details open>
 <summary>Busuu&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
@@ -181,7 +181,7 @@ about your APK doesn't match.
 
 | Patch | Description | Options |
 |----------|----------------|-----------|
-| [AMOLED (baked in)](#amoled-baked-in) | Bakes a true-black AMOLED theme into Busuu at patch time by darkening its night-mode surface colours. Works on every Android version. Changing it later requires re-patching. |  |
+| [AMOLED (baked in)](#amoled-baked-in) | Bakes a true-black AMOLED theme into Busuu at patch time by darkening every dark surface in its night-mode palette. Works on every Android version. Changing it later requires re-patching. |  |
 | [Enable Premium](#enable-premium) | Enables app features locked behind the subscription paywall. |  |
 
 </details>

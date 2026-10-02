@@ -1,3 +1,9 @@
+## [2.19.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.18.1...v2.19.0) (2026-10-02)
+
+### ✨ New Features
+
+* value-based surface sweep for Busuu AMOLED patch ([d4f07eb](https://github.com/kim20598/Test-cloudstream1/commit/d4f07eb10ebf012b6b03486afdec6d0058da52bc))
+
 ## [2.18.1](https://github.com/kim20598/Test-cloudstream1/compare/v2.18.0...v2.18.1) (2026-10-02)
 
 ### 🐛 Bug Fixes

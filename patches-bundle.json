@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-02T11:51:29",
-  "description": "## [2.18.1](https://github.com/kim20598/Test-cloudstream1/compare/v2.18.0...v2.18.1) (2026-10-02)\n\n### 🐛 Bug Fixes\n\n* try alternate path for Busuu night colours in AMOLED patch ([ffc9e73](https://github.com/kim20598/Test-cloudstream1/commit/ffc9e7342ddff4fda000dd2a4ade5fdb24044618))",
-  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.18.1/patches-2.18.1.mpp",
+  "created_at": "2026-10-02T13:24:03",
+  "description": "## [2.19.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.18.1...v2.19.0) (2026-10-02)\n\n### ✨ New Features\n\n* value-based surface sweep for Busuu AMOLED patch ([d4f07eb](https://github.com/kim20598/Test-cloudstream1/commit/d4f07eb10ebf012b6b03486afdec6d0058da52bc))",
+  "download_url": "https://github.com/kim20598/Test-cloudstream1/releases/download/v2.19.0/patches-2.19.0.mpp",
   "signature_download_url": "",
-  "version": "2.18.1"
+  "version": "2.19.0"
 }

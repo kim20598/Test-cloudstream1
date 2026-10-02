@@ -21,34 +21,30 @@ import org.w3c.dom.Element
  * tints, accent-adjacent colours). This catches surface names we never curated,
  * which is the difference between "mostly dark" and "actually AMOLED".
  *
- * The surface heuristic (chroma <= 40, maxChannel <= 80, plus a known-hexes
- * allowlist) is adapted from the Brave AMOLED patch. The safety nets differ:
- * Brave protects text ids by walking styles/layout XML, which won't work here
- * because Busuu is Compose and those files don't carry the ids. Text ink is
- * protected by an explicit name list instead.
+ * Also patches the system navigation bar. Busuu's themes hardcode
+ * android:navigationBarColor to white in several places, with no night override,
+ * so the system nav bar stays white even when the app itself is dark. The patch
+ * flips those to black and clears android:windowLightNavigationBar.
  *
- * Only values-night/colors.xml is swept. values/colors.xml is left alone so
- * light mode is untouched.
- *
- * Skipped vs. Brave: no Material You role sweep (Busuu doesn't ship
- * values-v31/v34), no lStar selectors (Busuu's are timepicker boilerplate), no
- * drawable vector sweep (Busuu's dark panels are Compose, not vectors), no
- * bytecode patch (no dynamic-colors pref to disable).
+ * Only values-night/colors.xml is swept for surfaces. The day colors file is
+ * left alone so light mode is untouched. The day styles.xml IS patched, because
+ * Busuu ships no values-night/styles.xml — see the nav bar block in execute {}.
  */
 @Suppress("unused")
 val busuuAmoledPatch = resourcePatch(
     name = "AMOLED (baked in)",
     description = "Bakes a true-black AMOLED theme into Busuu at patch time by darkening " +
-        "every dark surface in its night-mode palette. Works on every Android version. " +
-        "Changing it later requires re-patching.",
+        "every dark surface in its night-mode palette and forcing the system navigation " +
+        "bar black. Works on every Android version. Changing it later requires re-patching.",
     default = false,
 ) {
     compatibleWith(COMPATIBILITY_BUSUU)
 
     execute {
-        // Marker resource so a future in-app Mod settings screen can detect that
-        // a baked theme is active. Written to the day file unconditionally,
-        // matching Letterboxd's BakedThemePatch pattern.
+        // ── Marker resource ──
+        // Presence of this colour tells runtime code the build-time theme patch
+        // ran. Written to the day file unconditionally, matching Letterboxd's
+        // BakedThemePatch pattern.
         document("res/values/colors.xml").use { document ->
             val resources = document.documentElement
                 ?: throw PatchException("res/values/colors.xml has no root element")
@@ -62,6 +58,7 @@ val busuuAmoledPatch = resourcePatch(
             }
         }
 
+        // ── Value-based surface sweep ──
         // Two candidate paths because Morphe's patcher exposes the night file
         // at different virtual paths depending on how it decoded the APK.
         val palettePaths = listOf(
@@ -109,6 +106,61 @@ val busuuAmoledPatch = resourcePatch(
                 "No Busuu night colours file found at any known path " +
                     "(tried: ${palettePaths.joinToString()})"
             )
+        }
+
+        // ── System navigation bar ──
+        // Busuu's themes declare android:navigationBarColor per-theme, most of
+        // them as @color/white or @android:color/white, and BusuuPrimaryWhiteTheme
+        // also sets android:windowLightNavigationBar=true. That's why the system
+        // nav bar renders white even when Busuu's UI is dark. There is no
+        // values-night/styles.xml in the APK, so the day styles file is the only
+        // place these declarations live.
+        //
+        // Only override the ones that are white or theme-referenced. Brand nav
+        // bars (BusuuTheme.BlueTheme, BusuuTheme.Onboarding) and already-dark
+        // ones (BusuuTheme.Black, BusuuTheme.BlackStatusBar) are left alone.
+        // Transparent bars (LoadingScreen, EdgeToEdgeFloatingDialogTheme) are
+        // also left alone — they're deliberate edge-to-edge overlays.
+        val stylePaths = listOf(
+            "res/values/styles.xml",
+            "resources/res/values/styles.xml",
+        )
+
+        val whiteNavBarValues = setOf(
+            "@android:color/white",
+            "@color/white",
+            "?android:attr/colorBackground",
+        )
+
+        for (stylePath in stylePaths) {
+            val styleExists = try {
+                get(stylePath).isFile
+            } catch (t: Throwable) {
+                false
+            }
+            if (!styleExists) continue
+
+            document(stylePath).use { document ->
+                val items = document.getElementsByTagName("item")
+                for (i in 0 until items.length) {
+                    val el = items.item(i) as Element
+                    when (el.getAttribute("name")) {
+                        "android:navigationBarColor" -> {
+                            val current = el.textContent.trim()
+                            if (current in whiteNavBarValues) {
+                                el.textContent = "#FF000000"
+                            }
+                        }
+                        "android:windowLightNavigationBar" -> {
+                            // Only flip the ones that are true (dark icons on
+                            // light bar). Flipping false→false is a no-op.
+                            if (el.textContent.trim() == "true") {
+                                el.textContent = "false"
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

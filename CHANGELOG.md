@@ -1,3 +1,9 @@
+## [2.18.1](https://github.com/kim20598/Test-cloudstream1/compare/v2.18.0...v2.18.1) (2026-10-02)
+
+### 🐛 Bug Fixes
+
+* try alternate path for Busuu night colours in AMOLED patch ([ffc9e73](https://github.com/kim20598/Test-cloudstream1/commit/ffc9e7342ddff4fda000dd2a4ade5fdb24044618))
+
 ## [2.18.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.17.0...v2.18.0) (2026-10-02)
 
 ### ✨ New Features

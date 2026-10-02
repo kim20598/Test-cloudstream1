@@ -8,8 +8,8 @@
 package app.template.patches.busuu
 
 import app.morphe.patcher.Fingerprint
+import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.bytecodePatch
-import app.morphe.util.returnEarly
 import app.template.patches.shared.Constants.COMPATIBILITY_BUSUU
 
 // ApiUser
@@ -48,13 +48,27 @@ val enablePremiumPatch = bytecodePatch(
     compatibleWith(COMPATIBILITY_BUSUU)
 
     execute {
+        // isPremium() → true
         IsPremiumFingerprint.match(ApiUserToStringFingerprint.classDef)
-            .method.returnEarly(true)
+            .method.apply {
+                addInstructions(0, "const/4 v0, 0x1\nreturn v0")
+            }
 
+        // getTier() → "standard"
         GetTierFingerprint.match(ApiUserAccessToStringFingerprint.classDef)
-            .method.returnEarly("standard")
+            .method.apply {
+                addInstructions(0, "const-string v0, \"standard\"\nreturn-object v0")
+            }
 
-        GetHasActiveSubscriptionFingerprint.method.returnEarly(true)
-        IsPremiumFingerprint.match(PremiumUserCtorFingerprint.classDef).method.returnEarly(true)
+        // getHasActiveSubscription() → true
+        GetHasActiveSubscriptionFingerprint.method.apply {
+            addInstructions(0, "const/4 v0, 0x1\nreturn v0")
+        }
+
+        // isPremium() → true (PremiumUser variant)
+        IsPremiumFingerprint.match(PremiumUserCtorFingerprint.classDef)
+            .method.apply {
+                addInstructions(0, "const/4 v0, 0x1\nreturn v0")
+            }
     }
 }

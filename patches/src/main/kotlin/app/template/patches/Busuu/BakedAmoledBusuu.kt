@@ -16,9 +16,9 @@ import org.w3c.dom.Element
  * (#FF0A0A0A / #FF0F0F0F / #FF1A1A1A) so an OLED screen saves power and the
  * theme reads as genuine AMOLED instead of dark grey.
  *
- * Only `values-night/colors.xml` is written to. The day file is left alone so
- * light mode is untouched — patching the day values with black would break
- * every screen in light mode.
+ * Only the night colours are written to. The day file is left alone so light
+ * mode is untouched — patching the day values with black would break every
+ * screen in light mode.
  *
  * Text colours, icon tints, accents, and the Material timepicker widget's
  * resources are deliberately not touched: those need to stay light-on-dark for
@@ -27,6 +27,12 @@ import org.w3c.dom.Element
  * This is a `resourcePatch`, so it has no relationship to the bytecode side of
  * the Busuu patches (EnablePremium.kt) and does not need `addInstructions` or
  * `returnEarly` — those live in the bytecode API surface.
+ *
+ * Two candidate paths are attempted because Morphe's patcher exposes the
+ * qualifier-specific resource file at different virtual paths depending on how
+ * it decoded the APK: usually `res/values-night/colors.xml`, sometimes
+ * `resources/res/values-night/colors.xml`. Whichever resolves first is used;
+ * if neither does, the patch fails loudly instead of silently no-op'ing.
  */
 @Suppress("unused")
 val busuuAmoledPatch = resourcePatch(
@@ -39,39 +45,49 @@ val busuuAmoledPatch = resourcePatch(
     compatibleWith(COMPATIBILITY_BUSUU)
 
     execute {
-        val nightPath = "res/values-night/colors.xml"
+        val candidates = listOf(
+            "res/values-night/colors.xml",
+            "resources/res/values-night/colors.xml",
+        )
 
-        val exists = try {
-            get(nightPath).isFile
-        } catch (t: Throwable) {
-            false
-        }
+        var wrote = false
 
-        if (!exists) {
-            // Busuu versions we target all ship a night colours file; if this ever
-            // stops being true, fail loudly rather than silently produce a
-            // no-op patch.
-            throw PatchException("$nightPath not found — cannot bake AMOLED theme")
-        }
+        for (path in candidates) {
+            val exists = try {
+                get(path).isFile
+            } catch (t: Throwable) {
+                false
+            }
+            if (!exists) continue
 
-        document(nightPath).use { document ->
-            val resources = document.documentElement
-                ?: throw PatchException("$nightPath has no root element")
+            document(path).use { document ->
+                val resources = document.documentElement
+                    ?: throw PatchException("$path has no root element")
 
-            BUSUU_AMOLED_NIGHT.forEach { (name, hex) ->
-                writeColorIfPresent(document, resources, name, hex)
+                BUSUU_AMOLED_NIGHT.forEach { (name, hex) ->
+                    writeColorIfPresent(document, resources, name, hex)
+                }
+
+                // Marker resource so a future in-app Mod settings screen can detect that
+                // a baked theme is active. Mirrors the Letterboxd patch's `morphe_baked_theme`.
+                if (!hasColor(document, "morphe_baked_theme")) {
+                    resources.appendChild(
+                        document.createElement("color").apply {
+                            setAttribute("name", "morphe_baked_theme")
+                            textContent = "#FF000000"
+                        }
+                    )
+                }
             }
 
-            // Marker resource so a future in-app Mod settings screen can detect that
-            // a baked theme is active. Mirrors the Letterboxd patch's `morphe_baked_theme`.
-            if (!hasColor(document, "morphe_baked_theme")) {
-                resources.appendChild(
-                    document.createElement("color").apply {
-                        setAttribute("name", "morphe_baked_theme")
-                        textContent = "#FF000000"
-                    }
-                )
-            }
+            wrote = true
+        }
+
+        if (!wrote) {
+            throw PatchException(
+                "No Busuu night colours file found at any known path " +
+                    "(tried: ${candidates.joinToString()})"
+            )
         }
     }
 }

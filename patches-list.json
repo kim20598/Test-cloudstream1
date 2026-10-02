@@ -1,6 +1,6 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "2.16.2",
+  "version": "2.17.0",
   "patches": [
     {
       "name": "Appearance",
@@ -122,6 +122,37 @@
           }
         }
       ]
+    },
+    {
+      "name": "Enable Premium",
+      "description": "Enables app features locked behind the subscription paywall.",
+      "default": true,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
+          "packageName": "com.busuu.android.enc",
+          "name": "Busuu",
+          "description": null,
+          "apkFileType": "APK",
+          "appIconColor": "#116EEE",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "32.44.1",
+              "versionCodes": {
+                "ARM64_V8A": 1717099,
+                "ARMEABI_V7A": 1717099,
+                "X86_64": 1717099,
+                "X86": 1717099
+              },
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
     },
     {
       "name": "Force Patron (local)",

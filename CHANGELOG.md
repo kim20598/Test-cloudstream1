@@ -1,3 +1,13 @@
+## [2.17.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.16.2...v2.17.0) (2026-10-02)
+
+### 🐛 Bug Fixes
+
+* replace returnEarly with addInstructions for Busuu patch ([bb9f2bb](https://github.com/kim20598/Test-cloudstream1/commit/bb9f2bb08186254667177f8a2781b8ed4c71b6fb))
+
+### ✨ New Features
+
+* add Busuu Enable Premium patch ([719d089](https://github.com/kim20598/Test-cloudstream1/commit/719d0895792615b77888999d42457491a5af6037))
+
 ## [2.16.2](https://github.com/kim20598/Test-cloudstream1/compare/v2.16.1...v2.16.2) (2026-10-01)
 
 ### 🐛 Bug Fixes

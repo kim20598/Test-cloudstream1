@@ -169,7 +169,23 @@ about your APK doesn't match.
 ## Patches
 
 <!-- PATCHES_START EXPANDED -->
-> **[v2.17.0](https://github.com/kim20598/Test-cloudstream1/releases/tag/v2.17.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;10 patches total
+> **[v2.18.0](https://github.com/kim20598/Test-cloudstream1/releases/tag/v2.18.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;11 patches total
+<details open>
+<summary>Busuu&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
+<br>
+
+**Supported versions:**
+
+| 32.44.1 |
+| :---: |
+
+| Patch | Description | Options |
+|----------|----------------|-----------|
+| [AMOLED (baked in)](#amoled-baked-in) | Bakes a true-black AMOLED theme into Busuu at patch time by darkening its night-mode surface colours. Works on every Android version. Changing it later requires re-patching. |  |
+| [Enable Premium](#enable-premium) | Enables app features locked behind the subscription paywall. |  |
+
+</details>
+
 <details open>
 <summary>Letterboxd&nbsp;&nbsp;•&nbsp;&nbsp;9 patches</summary>
 <br>
@@ -185,21 +201,6 @@ about your APK doesn't match.
 | [Material You theme](#material-you-theme) | Repaints Letterboxd's dark chrome — window background, surfaces, cards, the top bar, tab strip, bottom nav and sheets — from the device's Material You palette on Android 12+ (no effect below). No accent or OLED options here; those live in the "Mod settings" screen — but that screen's "Pure black (OLED)" and "Match bottom nav" switches turn themselves off while this patch is applied, since it already repaints those surfaces on its own. No effect on Jetpack Compose screens. |  |
 | [Mod settings](#mod-settings) | HOW TO OPEN: long-press the settings gear on your profile tab. — This adds a "Letterboxd Mods" screen that collects the other patches' options (theme, accent, hide ratings, hide video store, hide where to watch, open in player, match bottom nav, etc.) so you can change them inside the app instead of re-patching. Some changes apply immediately, others after a restart, and you'll be prompted either way. | • Cover |
 | [Theme (baked in)](#theme-baked-in) | Bakes a dark surface theme directly into the APK at patch time. Works on every Android version, including below 12 where the runtime "Appearance" theme picker can't run. Changing theme later requires re-patching. | • Theme |
-
-</details>
-
-<details open>
-<summary>Busuu&nbsp;&nbsp;•&nbsp;&nbsp;1 patch</summary>
-<br>
-
-**Supported versions:**
-
-| 32.44.1 |
-| :---: |
-
-| Patch | Description | Options |
-|----------|----------------|-----------|
-| [Enable Premium](#enable-premium) | Enables app features locked behind the subscription paywall. |  |
 
 </details>
 

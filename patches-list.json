@@ -1,7 +1,38 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "2.17.0",
+  "version": "2.18.0",
   "patches": [
+    {
+      "name": "AMOLED (baked in)",
+      "description": "Bakes a true-black AMOLED theme into Busuu at patch time by darkening its night-mode surface colours. Works on every Android version. Changing it later requires re-patching.",
+      "default": false,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
+          "packageName": "com.busuu.android.enc",
+          "name": "Busuu",
+          "description": null,
+          "apkFileType": "APK",
+          "appIconColor": "#116EEE",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "32.44.1",
+              "versionCodes": {
+                "ARM64_V8A": 1717099,
+                "ARMEABI_V7A": 1717099,
+                "X86_64": 1717099,
+                "X86": 1717099
+              },
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
     {
       "name": "Appearance",
       "description": "In-app appearance controls, adjustable from the Letterboxd Mods screen without re-patching: a dark surface theme (Pure Black / Purple / Midnight Blue), a custom accent colour (presets or any hex), and the bottom-navigation selected style. Applied at runtime via resource overlays on Android 12 and later. Needs the \"Mod settings\" patch. If the separate \"Material You theme\" patch is also applied, its OLED and nav-bar-match switches are disabled here automatically — the two theming systems can't run at once.",

@@ -1,3 +1,9 @@
+## [2.18.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.17.0...v2.18.0) (2026-10-02)
+
+### ✨ New Features
+
+* add AMOLED (baked in) patch for Busuu ([e51d8dc](https://github.com/kim20598/Test-cloudstream1/commit/e51d8dcd6744006bb27c57b21451a892d6daccf6))
+
 ## [2.17.0](https://github.com/kim20598/Test-cloudstream1/compare/v2.16.2...v2.17.0) (2026-10-02)
 
 ### 🐛 Bug Fixes

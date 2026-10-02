@@ -6,15 +6,22 @@ import app.morphe.patcher.patch.Compatibility
 
 object Constants {
     val COMPATIBILITY_LETTERBOXD = Compatibility(
-        name = "Letterboxd", // App name as it appears in the Android launcher.
+        name = "Letterboxd",
         packageName = "com.letterboxd.letterboxd",
-        apkFileType = ApkFileType.APK, // Change to APKM if you patch a split bundle from ApkMirror.
-        appIconColor = 0xFF8000, // Letterboxd brand orange.
+        apkFileType = ApkFileType.APK,
+        appIconColor = 0xFF8000,
         targets = listOf(
-            // null version = compatible with any Letterboxd version, not just one pinned build.
-            AppTarget(
-                version = null
-            )
+            AppTarget(version = null)
+        )
+    )
+
+    val COMPATIBILITY_BUSUU = Compatibility(
+        name = "Busuu",
+        packageName = "com.busuu.android.enc",
+        apkFileType = ApkFileType.APK,
+        appIconColor = 0x116EEE,
+        targets = listOf(
+            AppTarget(version = "32.44.1", versionCode = 1717099)
         )
     )
 }
